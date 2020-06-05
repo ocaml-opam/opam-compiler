@@ -1,0 +1,9 @@
+(rule
+ (target run.t.corrected)
+ (action
+  (run ocaml-mdx test %{dep:run.t})))
+
+(rule
+ (alias runtest)
+ (action
+  (diff? run.t run.t.corrected)))
