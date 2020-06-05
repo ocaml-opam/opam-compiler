@@ -1,9 +1,12 @@
 (rule
  (target run.t.corrected)
  (action
-  (run ocaml-mdx test %{dep:run.t})))
+  (setenv
+   EXE
+   %{bin:opam-compiler}
+   (run ocaml-mdx test --force-output %{dep:run.t}))))
 
 (rule
  (alias runtest)
  (action
-  (diff? run.t run.t.corrected)))
+  (diff run.t run.t.corrected)))
