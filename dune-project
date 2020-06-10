@@ -1,8 +1,12 @@
 (lang dune 2.5)
 (name opam-compiler)
 (generate_opam_files true)
+(source
+ (github emillon/opam-compiler))
+(authors "Etienne Millon <me@emillon.org>")
+(maintainers "Etienne Millon <me@emillon.org>")
 (package
  (name opam-compiler)
- (maintainers "Etienne Millon <me@emillon.org>")
  (tags (flags:plugin))
- (depends (mdx :with-test)))
+ (depends
+  (mdx :with-test)))
