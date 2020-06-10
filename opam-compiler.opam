@@ -7,6 +7,7 @@ homepage: "https://github.com/emillon/opam-compiler"
 bug-reports: "https://github.com/emillon/opam-compiler/issues"
 depends: [
   "dune" {>= "2.5"}
+  "bos"
   "mdx" {with-test}
 ]
 build: [

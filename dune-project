@@ -9,4 +9,5 @@
  (name opam-compiler)
  (tags (flags:plugin))
  (depends
+  bos
   (mdx :with-test)))
