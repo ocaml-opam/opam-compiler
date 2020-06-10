@@ -4,6 +4,7 @@ maintainer: ["Etienne Millon <me@emillon.org>"]
 tags: ["flags:plugin"]
 depends: [
   "dune" {>= "2.5"}
+  "mdx" {with-test}
 ]
 build: [
   ["dune" "subst"] {pinned}

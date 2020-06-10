@@ -4,4 +4,5 @@
 (package
  (name opam-compiler)
  (maintainers "Etienne Millon <me@emillon.org>")
- (tags (flags:plugin)))
+ (tags (flags:plugin))
+ (depends (mdx :with-test)))
