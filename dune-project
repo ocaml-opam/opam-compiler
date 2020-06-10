@@ -10,4 +10,5 @@
  (tags (flags:plugin))
  (depends
   bos
+  (alcotest :with-test)
   (mdx :with-test)))
