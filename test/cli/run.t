@@ -6,6 +6,11 @@ Sources can take several forms:
   $ $EXE info user/repo:branch
   source: Github_branch { user = "user"; repo = "repo"; branch = "branch" }
 
+Branches can have dashes:
+
+  $ $EXE info user/repo:my-great-branch
+  source: Github_branch { user = "user"; repo = "repo"; branch = "my-great-branch" }
+
 If repo is omitted, it defaults to ocaml:
 
   $ $EXE info user:branch
@@ -23,13 +28,6 @@ Or when omitted, a PR against the main repo:
 
 Creating and updating a switch
 ==============================
-
-One can make a switch from a reference:
-
-  $ $EXE create 'user:branch'
-  Creating switch: "user:branch"
-  Resolving to Github_commit { user = "user"; repo = "ocaml"; hash = ? }
-  Creating opam switch named "user:branch" based in Github_commit { user = "user"; repo = "ocaml"; hash = ? }
 
 References can move; in that case the switch can be updated:
 
