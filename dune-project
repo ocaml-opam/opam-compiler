@@ -10,4 +10,5 @@
  (tags (flags:plugin))
  (depends
   bos
+  re
   (alcotest :with-test)))

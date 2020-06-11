@@ -8,6 +8,7 @@ bug-reports: "https://github.com/emillon/opam-compiler/issues"
 depends: [
   "dune" {>= "2.5"}
   "bos"
+  "re"
   "alcotest" {with-test}
 ]
 build: [
