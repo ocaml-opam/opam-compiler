@@ -3,8 +3,6 @@ open! Import
 let create switch_manager arg =
   let source = Source.parse_exn arg in
   let switch_name = Source.global_switch_name source in
-  assert (not (String.contains switch_name '/'));
-  assert (not (String.contains switch_name ':'));
   let description = Source.switch_description source in
   match
     Switch_manager.create_from_scratch switch_manager ~name:switch_name

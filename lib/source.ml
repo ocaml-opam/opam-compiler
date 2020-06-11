@@ -50,9 +50,8 @@ let raw_switch_name source =
   | Github_PR { user; repo; number } ->
       Format.asprintf "%s/%s#%d" user repo number
 
-let to_global_switch_name = String.map (function '/' | ':' -> '-' | c -> c)
-
-let global_switch_name source = to_global_switch_name (raw_switch_name source)
+let global_switch_name source =
+  Switch_name.escape_string (raw_switch_name source)
 
 let switch_description source =
   Format.asprintf "[opam-compiler] %s" (raw_switch_name source)

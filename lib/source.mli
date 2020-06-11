@@ -6,7 +6,7 @@ val git_url : t -> string
 
 val switch_description : t -> string
 
-val global_switch_name : t -> string
+val global_switch_name : t -> Switch_name.t
 
 val pp : Format.formatter -> t -> unit
 

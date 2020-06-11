@@ -23,9 +23,10 @@ let switch_manager_create_from_scratch_tests =
   let test name create_switch_manager expected =
     let run () =
       let switch_manager = create_switch_manager () in
+      let name = Opam_compiler.Switch_name.of_string_exn "NAME" in
       let got =
-        Opam_compiler.Switch_manager.create_from_scratch switch_manager
-          ~name:"NAME" ~description:"DESCRIPTION"
+        Opam_compiler.Switch_manager.create_from_scratch switch_manager ~name
+          ~description:"DESCRIPTION"
       in
       Alcotest.check Alcotest.(result unit error) __LOC__ expected got
     in

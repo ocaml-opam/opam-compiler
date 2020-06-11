@@ -2,19 +2,19 @@ let exec cmd = Bos.OS.Cmd.run cmd |> Rresult.R.failwith_error_msg
 
 type t = {
   create :
-    name:string ->
+    name:Switch_name.t ->
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
-  remove : name:string -> (unit, [ `Unknown ]) result;
-  pin_add : name:string -> string -> unit;
+  remove : name:Switch_name.t -> (unit, [ `Unknown ]) result;
+  pin_add : name:Switch_name.t -> string -> unit;
 }
 
 let real =
   let create ~name ~description =
     let create_cmd =
       let open Bos.Cmd in
-      v "opam" % "switch" % "create" % name % "--empty" % "--description"
-      % description
+      v "opam" % "switch" % "create" % Switch_name.to_string name % "--empty"
+      % "--description" % description
     in
     Bos.OS.Cmd.run_status create_cmd |> Rresult.R.failwith_error_msg |> function
     | `Exited 0 -> Ok ()
@@ -24,7 +24,7 @@ let real =
   let remove ~name =
     Bos.OS.Cmd.run
       (let open Bos.Cmd in
-      v "opam" % "switch" % "remove" % name)
+      v "opam" % "switch" % "remove" % Switch_name.to_string name)
     |> function
     | Ok () -> Ok ()
     | Error _ -> Error `Unknown
@@ -32,8 +32,8 @@ let real =
   let pin_add ~name url =
     exec
       (let open Bos.Cmd in
-      v "opam" % "pin" % "add" % "--switch" % name % "--yes" % "ocaml-variants"
-      % url)
+      v "opam" % "pin" % "add" % "--switch" % Switch_name.to_string name
+      % "--yes" % "ocaml-variants" % url)
   in
   { create; remove; pin_add }
 
