@@ -31,7 +31,7 @@ let parse_as_branch s =
 let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
 
 let parse s =
-  List.find_map (fun parse -> parse s) [ parse_as_branch; parse_as_pr ]
+  match parse_as_branch s with Some _ as r -> r | None -> parse_as_pr s
 
 let parse_exn s = parse s |> option_or_fail "Cannot parse source"
 
