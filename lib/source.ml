@@ -22,13 +22,13 @@ let parse_as_branch s =
          ])
   in
   Re.exec_opt re_branch s
-  |> Option.map (fun g ->
+  |> option_map (fun g ->
          let user = Re.Group.get g 1 in
          let repo = re_group_get_opt g 2 |> option_get ~default:"ocaml" in
          let branch = Re.Group.get g 3 in
          Github_branch { user; repo; branch })
 
-let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
+let parse_as_pr s = option_map github_pr (Pull_request.parse s)
 
 let parse s =
   match parse_as_branch s with Some _ as r -> r | None -> parse_as_pr s

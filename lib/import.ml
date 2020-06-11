@@ -9,5 +9,7 @@ let option_pair ao bo =
 
 let option_or_fail msg = function Some x -> x | None -> failwith msg
 
+let option_map f = function Some x -> Some (f x) | None -> None
+
 let re_group_get_opt group num =
   match Re.Group.get group num with s -> Some s | exception Not_found -> None
