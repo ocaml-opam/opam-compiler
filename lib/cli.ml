@@ -13,7 +13,15 @@ let create switch_manager arg =
       Switch_manager.pin_add switch_manager ~name:switch_name
         (Source.git_url source)
 
+let update switch_manager arg =
+  let source = Source.parse_exn arg in
+  let switch_name = Source.global_switch_name source in
+  match Switch_manager.update switch_manager ~name:switch_name with
+  | Error `Unknown -> failwith "couldn't update switch"
+  | Ok () -> ()
+
 let main () =
   match Sys.argv with
   | [| _; "create"; arg |] -> create Switch_manager.real arg
+  | [| _; "update"; arg |] -> update Switch_manager.real arg
   | _ -> assert false
