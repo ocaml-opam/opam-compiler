@@ -1,16 +1,5 @@
 open! Import
 
-let update_opam_switch ~name stable_source =
-  Format.printf "Updating opam switch named %S based in %a" name
-    Stable_source.pp stable_source
-
-let update arg =
-  Format.printf "Updating switch: %S\n" arg;
-  let source = Source.parse_exn arg in
-  let stable_source = Source.resolve source in
-  Format.printf "Resolving to %a\n" Stable_source.pp stable_source;
-  update_opam_switch ~name:arg stable_source
-
 let create switch_manager arg =
   let source = Source.parse_exn arg in
   let switch_name = Source.global_switch_name source in
@@ -28,6 +17,5 @@ let create switch_manager arg =
 
 let main () =
   match Sys.argv with
-  | [| _; "update"; arg |] -> update arg
   | [| _; "create"; arg |] -> create Switch_manager.real arg
   | _ -> assert false

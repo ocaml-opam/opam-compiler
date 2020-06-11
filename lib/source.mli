@@ -8,8 +8,6 @@ val switch_description : t -> string
 
 val global_switch_name : t -> string
 
-val resolve : t -> Stable_source.t
-
 val pp : Format.formatter -> t -> unit
 
 val equal : t -> t -> bool

@@ -43,17 +43,6 @@ let pp ppf = function
       Format.fprintf ppf "Github_PR { user = %S; repo = %S; number = %d }" user
         repo number
 
-let resolve source =
-  let open Stable_source in
-  match source with
-  | Github_branch { user; repo; branch = _ } ->
-      let hash = () in
-      Github_commit { user; repo; hash }
-  | Github_PR pr ->
-      let source_user, source_repo = Pull_request.target pr in
-      let hash = () in
-      Github_commit { user = source_user; repo = source_repo; hash }
-
 let raw_switch_name source =
   match source with
   | Github_branch { user; repo; branch } ->
