@@ -47,7 +47,7 @@ let create_from_scratch switch_manager ~name ~description =
   match create switch_manager ~name ~description with
   | Ok () -> Ok ()
   | Error `Switch_exists ->
-      Result.bind (remove switch_manager ~name) (fun () ->
+      Rresult.R.bind (remove switch_manager ~name) (fun () ->
           create switch_manager ~name ~description
-          |> Result.map_error (fun _ -> `Unknown))
+          |> Rresult.R.reword_error (fun _ -> `Unknown))
   | Error `Unknown as e -> e
