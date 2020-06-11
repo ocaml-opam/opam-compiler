@@ -6,6 +6,7 @@ type t = {
   remove : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   pin_add : name:Switch_name.t -> string -> unit;
   update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
+  info : name:Switch_name.t -> (string, [ `Unknown ]) result;
 }
 
 module Opam = struct
@@ -38,15 +39,21 @@ module Opam = struct
 
   let update ~name =
     (let open Bos.Cmd in
-    opam % "update" % "--switch" % Switch_name.to_string name
-    % ocaml_variants)
+    opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
     |> Bos.OS.Cmd.run
+    |> Rresult.R.reword_error (fun _ -> `Unknown)
+
+  let info ~name =
+    (let open Bos.Cmd in
+    opam % "show" % ocaml_variants % "--switch" % Switch_name.to_string name
+    % "-fsource-hash")
+    |> Bos.OS.Cmd.run_out |> Bos.OS.Cmd.to_string
     |> Rresult.R.reword_error (fun _ -> `Unknown)
 end
 
 let real =
   let open Opam in
-  { create; remove; pin_add; update }
+  { create; remove; pin_add; update; info }
 
 let create t = t.create
 
@@ -55,6 +62,8 @@ let remove t = t.remove
 let pin_add t = t.pin_add
 
 let update t = t.update
+
+let info t = t.info
 
 let create_from_scratch switch_manager ~name ~description =
   match create switch_manager ~name ~description with

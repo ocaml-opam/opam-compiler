@@ -8,7 +8,8 @@ let fail_all =
   let remove ~name:_ = assert false in
   let pin_add ~name:_ _ = assert false in
   let update ~name:_ = assert false in
-  { Opam_compiler.Switch_manager.create; remove; pin_add; update }
+  let info ~name:_ = assert false in
+  { Opam_compiler.Switch_manager.create; remove; pin_add; update; info }
 
 let create_ok ~name:_ ~description:_ = Ok ()
 
