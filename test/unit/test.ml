@@ -53,10 +53,37 @@ let switch_manager_create_from_scratch_tests =
       (Error `Unknown);
   ]
 
+let source =
+  Alcotest.testable Opam_compiler.Source.pp Opam_compiler.Source.equal
+
+let source_parse_tests =
+  let test name s expected =
+    ( name,
+      `Quick,
+      fun () ->
+        let got = Opam_compiler.Source.parse s in
+        Alcotest.check (Alcotest.option source) __LOC__ expected got )
+  in
+  [
+    test "full branch syntax" "user/repo:branch"
+      (Some (Github_branch { user = "user"; repo = "repo"; branch = "branch" }));
+    test "branches can have dashes" "user/repo:my-great-branch"
+      (Some
+         (Github_branch
+            { user = "user"; repo = "repo"; branch = "my-great-branch" }));
+    test "repo can be omitted and defaults to ocaml" "user:branch"
+      (Some (Github_branch { user = "user"; repo = "ocaml"; branch = "branch" }));
+    test "repo with PR number" "user/repo#1234"
+      (Some (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
+    test "defaults to main repo" "#1234"
+      (Some (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
+  ]
+
 let switch_manager_tests =
   [
     ( "Switch_manager create_from_scratch",
       switch_manager_create_from_scratch_tests );
+    ("Source parse", source_parse_tests);
   ]
 
 let all_tests = switch_manager_tests

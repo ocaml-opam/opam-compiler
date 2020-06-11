@@ -73,3 +73,5 @@ let git_url source =
   | Github_branch { user; repo; branch } ->
       Format.asprintf "git+https://github.com/%s/%s#%s" user repo branch
   | Github_PR _ -> failwith "PR: not implemented"
+
+let equal (x : t) y = x = y

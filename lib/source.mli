@@ -12,4 +12,8 @@ val resolve : t -> Stable_source.t
 
 val pp : Format.formatter -> t -> unit
 
+val equal : t -> t -> bool
+
+val parse : string -> t option
+
 val parse_exn : string -> t
