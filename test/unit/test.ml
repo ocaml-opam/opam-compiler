@@ -18,22 +18,24 @@ let fail_all =
   let info ~name:_ = assert false in
   { Switch_manager.create; remove; pin_add; update; info }
 
-type call =
-  | Create of { name : Switch_name.t; description : string }
-  | Remove of { name : Switch_name.t }
-  | Pin_add of { name : Switch_name.t; url : string }
+module Call = struct
+  type t =
+    | Create of { name : Switch_name.t; description : string }
+    | Remove of { name : Switch_name.t }
+    | Pin_add of { name : Switch_name.t; url : string }
 
-let pp_call ppf = function
-  | Create { name; description } ->
-      Format.fprintf ppf "Create { name = %a; description = %S }" Switch_name.pp
-        name description
-  | Remove { name } ->
-      Format.fprintf ppf "Remove { name = %a }" Switch_name.pp name
-  | Pin_add { name; url } ->
-      Format.fprintf ppf "Pin_add { name = %a; url = %S }" Switch_name.pp name
-        url
+  let pp ppf = function
+    | Create { name; description } ->
+        Format.fprintf ppf "Create { name = %a; description = %S }"
+          Switch_name.pp name description
+    | Remove { name } ->
+        Format.fprintf ppf "Remove { name = %a }" Switch_name.pp name
+    | Pin_add { name; url } ->
+        Format.fprintf ppf "Pin_add { name = %a; url = %S }" Switch_name.pp name
+          url
 
-let call = Alcotest.testable pp_call ( = )
+  let equal = ( = )
+end
 
 let cli_eval_tests =
   let branch = { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" } in
@@ -45,7 +47,7 @@ let cli_eval_tests =
         let create_rvs = ref create_rvs in
         let calls = ref [] in
         let create ~name ~description =
-          calls := Create { name; description } :: !calls;
+          calls := Call.Create { name; description } :: !calls;
           match !create_rvs with
           | [] -> assert false
           | h :: t ->
@@ -62,17 +64,17 @@ let cli_eval_tests =
         let got = Cli.eval (Create source) switch_manager github_client in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         Alcotest.check
-          Alcotest.(list call)
+          Alcotest.(list (module Call))
           __LOC__ expected_calls (List.rev !calls) )
   in
   let switch_name = Switch_name.of_string_exn "USER-REPO-BRANCH" in
   let create_call =
-    Create
+    Call.Create
       { name = switch_name; description = Source.switch_description source }
   in
-  let remove_call = Remove { name = switch_name } in
+  let remove_call = Call.Remove { name = switch_name } in
   let pin_add_call =
-    Pin_add { name = switch_name; url = Branch.git_url branch }
+    Call.Pin_add { name = switch_name; url = Branch.git_url branch }
   in
   [
     test "everything ok" ~create_rvs:[ Ok () ] ~remove_rv:(Ok ())
@@ -104,15 +106,13 @@ let cli_eval_tests =
       ~expected_calls:[ create_call; remove_call ];
   ]
 
-let source = Alcotest.testable Source.pp Source.equal
-
 let source_parse_tests =
   let test name s expected =
     ( name,
       `Quick,
       fun () ->
         let got = Source.parse s in
-        Alcotest.check (Alcotest.option source) __LOC__ expected got )
+        Alcotest.check (Alcotest.option (module Source)) __LOC__ expected got )
   in
   [
     test "full branch syntax" "user/repo:branch"
@@ -128,8 +128,6 @@ let source_parse_tests =
     test "defaults to main repo" "#1234"
       (Some (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
   ]
-
-let pull_request = Alcotest.testable Pull_request.pp Pull_request.equal
 
 let source_git_url_tests =
   let test_branch =
@@ -162,7 +160,9 @@ let source_git_url_tests =
         let source = Source.Github_PR pr in
         let got = Source.git_url source github_client in
         Alcotest.check Alcotest.(result string error) __LOC__ expected got;
-        Alcotest.check (Alcotest.list pull_request) __LOC__ [ pr ] !calls )
+        Alcotest.check
+          (Alcotest.list (module Pull_request))
+          __LOC__ [ pr ] !calls )
   in
   [
     test_pr "PR error" (Error `Unknown) (Error `Unknown);
