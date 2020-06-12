@@ -30,9 +30,23 @@ let info switch_manager arg =
   | Error `Unknown -> failwith "couldn't get info on switch"
   | Ok s -> print_endline s
 
+module Op = struct
+  type t = Create of string | Update of string | Info of string
+
+  let parse = function
+    | [| _; "create"; arg |] -> Some (Create arg)
+    | [| _; "update"; arg |] -> Some (Update arg)
+    | [| _; "info"; arg |] -> Some (Info arg)
+    | _ -> None
+
+  let run op switch_manager github_client =
+    match op with
+    | Create arg -> create switch_manager github_client arg
+    | Update arg -> update switch_manager arg
+    | Info arg -> info switch_manager arg
+end
+
 let main () =
-  match Sys.argv with
-  | [| _; "create"; arg |] -> create Switch_manager.real Github_client.real arg
-  | [| _; "update"; arg |] -> update Switch_manager.real arg
-  | [| _; "info"; arg |] -> info Switch_manager.real arg
-  | _ -> assert false
+  match Op.parse Sys.argv with
+  | Some op -> Op.run op Switch_manager.real Github_client.real
+  | None -> assert false
