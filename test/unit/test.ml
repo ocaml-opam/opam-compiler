@@ -5,6 +5,11 @@ let error =
   let equal_error = ( = ) in
   Alcotest.testable pp_error equal_error
 
+let msg = Alcotest.testable Rresult.R.pp_msg ( = )
+
+let github_client_fail_all =
+  { Github_client.pr_source_branch = (fun _ -> assert false) }
+
 let fail_all =
   let create ~name:_ ~description:_ = assert false in
   let remove ~name:_ = assert false in
@@ -13,49 +18,90 @@ let fail_all =
   let info ~name:_ = assert false in
   { Switch_manager.create; remove; pin_add; update; info }
 
-let create_ok ~name:_ ~description:_ = Ok ()
+type call =
+  | Create of { name : Switch_name.t; description : string }
+  | Remove of { name : Switch_name.t }
+  | Pin_add of { name : Switch_name.t; url : string }
 
-let create_exists ~name:_ ~description:_ = Error `Switch_exists
+let pp_call ppf = function
+  | Create { name; description } ->
+      Format.fprintf ppf "Create { name = %a; description = %S }" Switch_name.pp
+        name description
+  | Remove { name } ->
+      Format.fprintf ppf "Remove { name = %a }" Switch_name.pp name
+  | Pin_add { name; url } ->
+      Format.fprintf ppf "Pin_add { name = %a; url = %S }" Switch_name.pp name
+        url
 
-let create_error ~name:_ ~description:_ = Error `Unknown
+let call = Alcotest.testable pp_call ( = )
 
-let remove_ok ~name:_ = Ok ()
-
-let remove_error ~name:_ = Error `Unknown
-
-let switch_manager_create_from_scratch_tests =
-  let test name create_switch_manager expected =
-    let run () =
-      let switch_manager = create_switch_manager () in
-      let name = Switch_name.of_string_exn "NAME" in
-      let got =
-        Switch_manager.create_from_scratch switch_manager ~name
-          ~description:"DESCRIPTION"
-      in
-      Alcotest.check Alcotest.(result unit error) __LOC__ expected got
-    in
-    (name, `Quick, run)
+let cli_eval_tests =
+  let branch = { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" } in
+  let source = Source.Github_branch branch in
+  let test name ~create_rvs ~remove_rv ~expected ~expected_calls =
+    ( name,
+      `Quick,
+      fun () ->
+        let create_rvs = ref create_rvs in
+        let calls = ref [] in
+        let create ~name ~description =
+          calls := Create { name; description } :: !calls;
+          match !create_rvs with
+          | [] -> assert false
+          | h :: t ->
+              create_rvs := t;
+              h
+        in
+        let remove ~name =
+          calls := Remove { name } :: !calls;
+          remove_rv
+        in
+        let pin_add ~name url = calls := Pin_add { name; url } :: !calls in
+        let switch_manager = { fail_all with create; remove; pin_add } in
+        let github_client = github_client_fail_all in
+        let got = Cli.eval (Create source) switch_manager github_client in
+        Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
+        Alcotest.check
+          Alcotest.(list call)
+          __LOC__ expected_calls (List.rev !calls) )
+  in
+  let switch_name = Switch_name.of_string_exn "USER-REPO-BRANCH" in
+  let create_call =
+    Create
+      { name = switch_name; description = Source.switch_description source }
+  in
+  let remove_call = Remove { name = switch_name } in
+  let pin_add_call =
+    Pin_add { name = switch_name; url = Branch.git_url branch }
   in
   [
-    test "switch does not exist"
-      (fun () -> { fail_all with create = create_ok })
-      (Ok ());
-    test "switch exists"
-      (fun () ->
-        let count = ref 0 in
-        let create ~name:_ ~description:_ =
-          incr count;
-          if !count > 0 then Ok () else Error `Switch_exists
-        in
-        { fail_all with create; remove = remove_ok })
-      (Ok ());
-    test "create fails"
-      (fun () -> { fail_all with create = create_error })
-      (Error `Unknown);
-    test "remove fails"
-      (fun () ->
-        { fail_all with create = create_exists; remove = remove_error })
-      (Error `Unknown);
+    test "everything ok" ~create_rvs:[ Ok () ] ~remove_rv:(Ok ())
+      ~expected:(Ok ())
+      ~expected_calls:[ create_call; pin_add_call ];
+    test "first create fails"
+      ~create_rvs:[ Error `Unknown ]
+      ~remove_rv:(Ok ())
+      ~expected:(Error (`Msg "Cannot create switch"))
+      ~expected_calls:[ create_call ];
+    test "switch exists, rest ok"
+      ~create_rvs:[ Error `Switch_exists; Ok () ]
+      ~remove_rv:(Ok ()) ~expected:(Ok ())
+      ~expected_calls:[ create_call; remove_call; create_call; pin_add_call ];
+    test "switch exists, remove fails"
+      ~create_rvs:[ Error `Switch_exists; Ok () ]
+      ~remove_rv:(Error `Unknown)
+      ~expected:(Error (`Msg "Cannot create switch"))
+      ~expected_calls:[ create_call; remove_call ];
+    test "switch exists, remove ok, create fails"
+      ~create_rvs:[ Error `Switch_exists; Error `Unknown ]
+      ~remove_rv:(Error `Unknown)
+      ~expected:(Error (`Msg "Cannot create switch"))
+      ~expected_calls:[ create_call; remove_call ];
+    test "switch exists, remove ok, switch still exists"
+      ~create_rvs:[ Error `Switch_exists; Error `Switch_exists ]
+      ~remove_rv:(Error `Unknown)
+      ~expected:(Error (`Msg "Cannot create switch"))
+      ~expected_calls:[ create_call; remove_call ];
   ]
 
 let source = Alcotest.testable Source.pp Source.equal
@@ -90,9 +136,7 @@ let source_git_url_tests =
     ( "branch",
       `Quick,
       fun () ->
-        let github_client =
-          { Github_client.pr_source_branch = (fun _ -> assert false) }
-        in
+        let github_client = github_client_fail_all in
         let user = "USER" in
         let repo = "REPO" in
         let branch = "BRANCH" in
@@ -130,8 +174,7 @@ let source_git_url_tests =
 
 let switch_manager_tests =
   [
-    ( "Switch_manager create_from_scratch",
-      switch_manager_create_from_scratch_tests );
+    ("Cli eval", cli_eval_tests);
     ("Source parse", source_parse_tests);
     ("Source git_url", source_git_url_tests);
   ]
