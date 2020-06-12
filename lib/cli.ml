@@ -1,7 +1,6 @@
 open! Import
 
-let create switch_manager github_client arg =
-  let source = Source.parse_exn arg in
+let create switch_manager github_client source =
   let switch_name = Source.global_switch_name source in
   let description = Source.switch_description source in
   let open Rresult.R in
@@ -16,34 +15,34 @@ let create switch_manager github_client arg =
   | Error `Unknown -> failwith "couldn't create switch"
   | Ok () -> ()
 
-let update switch_manager arg =
-  let source = Source.parse_exn arg in
+let update switch_manager source =
   let switch_name = Source.global_switch_name source in
   match Switch_manager.update switch_manager ~name:switch_name with
   | Error `Unknown -> failwith "couldn't update switch"
   | Ok () -> ()
 
-let info switch_manager arg =
-  let source = Source.parse_exn arg in
+let info switch_manager source =
   let switch_name = Source.global_switch_name source in
   match Switch_manager.info switch_manager ~name:switch_name with
   | Error `Unknown -> failwith "couldn't get info on switch"
   | Ok s -> print_endline s
 
 module Op = struct
-  type t = Create of string | Update of string | Info of string
+  type t = Create of Source.t | Update of Source.t | Info of Source.t
 
   let parse = function
-    | [| _; "create"; arg |] -> Some (Create arg)
-    | [| _; "update"; arg |] -> Some (Update arg)
-    | [| _; "info"; arg |] -> Some (Info arg)
+    | [| _; "create"; arg |] ->
+        option_map (fun s -> Create s) (Source.parse arg)
+    | [| _; "update"; arg |] ->
+        option_map (fun s -> Update s) (Source.parse arg)
+    | [| _; "info"; arg |] -> option_map (fun s -> Info s) (Source.parse arg)
     | _ -> None
 
   let run op switch_manager github_client =
     match op with
-    | Create arg -> create switch_manager github_client arg
-    | Update arg -> update switch_manager arg
-    | Info arg -> info switch_manager arg
+    | Create s -> create switch_manager github_client s
+    | Update s -> update switch_manager s
+    | Info s -> info switch_manager s
 end
 
 let main () =
