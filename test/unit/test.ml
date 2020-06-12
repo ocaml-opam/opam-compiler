@@ -1,3 +1,5 @@
+open Opam_compiler
+
 let error =
   let pp_error ppf = function `Unknown -> Format.fprintf ppf "Unknown" in
   let equal_error = ( = ) in
@@ -9,7 +11,7 @@ let fail_all =
   let pin_add ~name:_ _ = assert false in
   let update ~name:_ = assert false in
   let info ~name:_ = assert false in
-  { Opam_compiler.Switch_manager.create; remove; pin_add; update; info }
+  { Switch_manager.create; remove; pin_add; update; info }
 
 let create_ok ~name:_ ~description:_ = Ok ()
 
@@ -25,9 +27,9 @@ let switch_manager_create_from_scratch_tests =
   let test name create_switch_manager expected =
     let run () =
       let switch_manager = create_switch_manager () in
-      let name = Opam_compiler.Switch_name.of_string_exn "NAME" in
+      let name = Switch_name.of_string_exn "NAME" in
       let got =
-        Opam_compiler.Switch_manager.create_from_scratch switch_manager ~name
+        Switch_manager.create_from_scratch switch_manager ~name
           ~description:"DESCRIPTION"
       in
       Alcotest.check Alcotest.(result unit error) __LOC__ expected got
@@ -56,15 +58,14 @@ let switch_manager_create_from_scratch_tests =
       (Error `Unknown);
   ]
 
-let source =
-  Alcotest.testable Opam_compiler.Source.pp Opam_compiler.Source.equal
+let source = Alcotest.testable Source.pp Source.equal
 
 let source_parse_tests =
   let test name s expected =
     ( name,
       `Quick,
       fun () ->
-        let got = Opam_compiler.Source.parse s in
+        let got = Source.parse s in
         Alcotest.check (Alcotest.option source) __LOC__ expected got )
   in
   [
@@ -82,11 +83,57 @@ let source_parse_tests =
       (Some (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
   ]
 
+let pull_request = Alcotest.testable Pull_request.pp Pull_request.equal
+
+let source_git_url_tests =
+  let test_branch =
+    ( "branch",
+      `Quick,
+      fun () ->
+        let github_client =
+          { Github_client.pr_source_branch = (fun _ -> assert false) }
+        in
+        let user = "USER" in
+        let repo = "REPO" in
+        let branch = "BRANCH" in
+        let expected = Ok "git+https://github.com/USER/REPO#BRANCH" in
+        let source = Source.Github_branch { user; repo; branch } in
+        let got = Source.git_url source github_client in
+        Alcotest.check Alcotest.(result string error) __LOC__ expected got )
+  in
+  let test_pr name github_response expected =
+    ( name,
+      `Quick,
+      fun () ->
+        let calls = ref [] in
+        let pr_source_branch pr =
+          calls := pr :: !calls;
+          github_response
+        in
+        let github_client = { Github_client.pr_source_branch } in
+        let user = "USER" in
+        let repo = "REPO" in
+        let number = 1234 in
+        let pr = { Pull_request.user; repo; number } in
+        let source = Source.Github_PR pr in
+        let got = Source.git_url source github_client in
+        Alcotest.check Alcotest.(result string error) __LOC__ expected got;
+        Alcotest.check (Alcotest.list pull_request) __LOC__ [ pr ] !calls )
+  in
+  [
+    test_pr "PR error" (Error `Unknown) (Error `Unknown);
+    test_pr "PR ok"
+      (Ok { Branch.user = "SRC_USER"; repo = "SRC_REPO"; branch = "SRC_BRANCH" })
+      (Ok "git+https://github.com/SRC_USER/SRC_REPO#SRC_BRANCH");
+    test_branch;
+  ]
+
 let switch_manager_tests =
   [
     ( "Switch_manager create_from_scratch",
       switch_manager_create_from_scratch_tests );
     ("Source parse", source_parse_tests);
+    ("Source git_url", source_git_url_tests);
   ]
 
 let all_tests = switch_manager_tests

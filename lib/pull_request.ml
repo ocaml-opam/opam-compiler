@@ -2,11 +2,10 @@ open! Import
 
 type t = { user : string; repo : string; number : int }
 
-let target { user; repo; number } =
-  let descr = Format.asprintf "%s/%s#%d" user repo number in
-  let source_user = Format.asprintf "src_user_%s" descr in
-  let source_repo = Format.asprintf "src_repo_%s" descr in
-  (source_user, source_repo)
+let pp ppf { user; repo; number } =
+  Format.fprintf ppf "{ user = %S; repo = %S; number = %d }" user repo number
+
+let equal (x : t) y = x = y
 
 let parse s =
   let word = Re.rep1 Re.wordc in

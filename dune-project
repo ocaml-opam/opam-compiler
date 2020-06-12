@@ -18,5 +18,7 @@
   (ocaml
    (>= 4.03.0))
   bos
+  github-unix
+  lwt_ssl
   re
   (alcotest :with-test)))

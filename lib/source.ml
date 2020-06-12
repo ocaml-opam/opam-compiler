@@ -1,8 +1,6 @@
 open! Import
 
-type t =
-  | Github_branch of { user : string; repo : string; branch : string }
-  | Github_PR of Pull_request.t
+type t = Github_branch of Branch.t | Github_PR of Pull_request.t
 
 let github_pr pr = Github_PR pr
 
@@ -36,12 +34,9 @@ let parse s =
 let parse_exn s = parse s |> option_or_fail "Cannot parse source"
 
 let pp ppf = function
-  | Github_branch { user; repo; branch } ->
-      Format.fprintf ppf "Github_branch { user = %S; repo = %S; branch = %S }"
-        user repo branch
-  | Github_PR { user; repo; number } ->
-      Format.fprintf ppf "Github_PR { user = %S; repo = %S; number = %d }" user
-        repo number
+  | Github_branch branch ->
+      Format.fprintf ppf "Github_branch %a" Branch.pp branch
+  | Github_PR pr -> Format.fprintf ppf "Github_PR %a" Pull_request.pp pr
 
 let raw_switch_name source =
   match source with
@@ -56,10 +51,13 @@ let global_switch_name source =
 let switch_description source =
   Format.asprintf "[opam-compiler] %s" (raw_switch_name source)
 
-let git_url source =
+let as_branch source github_client =
   match source with
-  | Github_branch { user; repo; branch } ->
-      Format.asprintf "git+https://github.com/%s/%s#%s" user repo branch
-  | Github_PR _ -> failwith "PR: not implemented"
+  | Github_branch branch -> Ok branch
+  | Github_PR pr -> Github_client.pr_source_branch github_client pr
+
+let git_url source github_client =
+  let open Rresult.R in
+  as_branch source github_client >>| fun branch -> Branch.git_url branch
 
 let equal (x : t) y = x = y

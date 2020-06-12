@@ -1,5 +1,7 @@
 type t = { user : string; repo : string; number : int }
 
-val parse : string -> t option
+val pp : Format.formatter -> t -> unit
 
-val target : t -> string * string
+val equal : t -> t -> bool
+
+val parse : string -> t option
