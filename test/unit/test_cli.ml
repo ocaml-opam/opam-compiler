@@ -21,7 +21,7 @@ module Call = struct
   let equal = ( = )
 end
 
-let eval_tests =
+let eval_create_tests =
   let branch = { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" } in
   let source = Source.Github_branch branch in
   let test name ~create_rvs ~remove_rv ~expected ~expected_calls =
@@ -92,4 +92,28 @@ let eval_tests =
       ~expected_calls:[ create_call; remove_call ];
   ]
 
-let tests = [ ("Cli eval", eval_tests) ]
+let eval_reinstall_tests =
+  [
+    ( "reinstall",
+      `Quick,
+      fun () ->
+        let recorder = Call_recorder.create () in
+        let reinstall () =
+          Call_recorder.record recorder ();
+          Ok ()
+        in
+        let switch_manager =
+          { Helpers.switch_manager_fail_all with reinstall }
+        in
+        let github_client = Helpers.github_client_fail_all in
+        let expected = Ok () in
+        let got = Cli.eval Reinstall switch_manager github_client in
+        Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
+        Call_recorder.check recorder Alcotest.unit __LOC__ [ () ] );
+  ]
+
+let tests =
+  [
+    ("Cli eval create", eval_create_tests);
+    ("Cli eval reinstall", eval_reinstall_tests);
+  ]

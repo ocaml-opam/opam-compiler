@@ -24,19 +24,30 @@ let info switch_manager source =
   |> reword_error (fun `Unknown -> msgf "Could not get info about switch")
   |> map print_endline
 
-type op = Create of Source.t | Update of Source.t | Info of Source.t
+type op =
+  | Create of Source.t
+  | Update of Source.t
+  | Info of Source.t
+  | Reinstall
 
 let parse = function
   | [| _; "create"; arg |] -> Some (Create (Source.parse arg))
   | [| _; "update"; arg |] -> Some (Update (Source.parse arg))
   | [| _; "info"; arg |] -> Some (Info (Source.parse arg))
+  | [| _; "reinstall" |] -> Some Reinstall
   | _ -> None
+
+let reinstall switch_manager =
+  let open Rresult.R in
+  Switch_manager.reinstall switch_manager
+  |> reword_error (fun `Unknown -> msgf "Could not reinstall")
 
 let eval op switch_manager github_client =
   match op with
   | Create s -> create switch_manager github_client s
   | Update s -> update switch_manager s
   | Info s -> info switch_manager s
+  | Reinstall -> reinstall switch_manager
 
 let run op switch_manager github_client =
   eval op switch_manager github_client |> Rresult.R.failwith_error_msg

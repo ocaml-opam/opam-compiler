@@ -7,6 +7,7 @@ type t = {
   pin_add : name:Switch_name.t -> string -> unit;
   update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
+  reinstall : unit -> (unit, [ `Unknown ]) result;
 }
 
 val create_from_scratch :
@@ -19,3 +20,5 @@ val pin_add : t -> name:Switch_name.t -> string -> unit
 val update : t -> name:Switch_name.t -> (unit, [ `Unknown ]) result
 
 val info : t -> name:Switch_name.t -> (string, [ `Unknown ]) result
+
+val reinstall : t -> (unit, [ `Unknown ]) result

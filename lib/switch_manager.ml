@@ -7,6 +7,7 @@ type t = {
   pin_add : name:Switch_name.t -> string -> unit;
   update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
+  reinstall : unit -> (unit, [ `Unknown ]) result;
 }
 
 module Opam = struct
@@ -49,11 +50,22 @@ module Opam = struct
     % "-fsource-hash")
     |> Bos.OS.Cmd.run_out |> Bos.OS.Cmd.to_string
     |> Rresult.R.reword_error (fun _ -> `Unknown)
+
+  let reinstall () =
+    (let open Rresult.R in
+    let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
+    Bos.OS.Cmd.run_out prefix_cmd |> Bos.OS.Cmd.to_string >>= fun prefix ->
+    let configure = Bos.Cmd.(v "./configure" % "--prefix" % prefix) in
+    let make = Bos.Cmd.(v "make") in
+    let make_install = Bos.Cmd.(v "make" % "install") in
+    Bos.OS.Cmd.run configure >>= fun () ->
+    Bos.OS.Cmd.run make >>= fun () -> Bos.OS.Cmd.run make_install)
+    |> Rresult.R.reword_error (fun _ -> `Unknown)
 end
 
 let real =
   let open Opam in
-  { create; remove; pin_add; update; info }
+  { create; remove; pin_add; update; info; reinstall }
 
 let create t = t.create
 
@@ -64,6 +76,8 @@ let pin_add t = t.pin_add
 let update t = t.update
 
 let info t = t.info
+
+let reinstall t = t.reinstall ()
 
 let create_from_scratch switch_manager ~name ~description =
   match create switch_manager ~name ~description with
