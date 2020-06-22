@@ -21,25 +21,6 @@ module Call = struct
   let equal = ( = )
 end
 
-module Call_recorder : sig
-  type 'a t
-
-  val create : unit -> 'a t
-
-  val record : 'a t -> 'a -> unit
-
-  val check : 'a t -> 'a Alcotest.testable -> string -> 'a list -> unit
-end = struct
-  type 'a t = 'a list ref
-
-  let create () = ref []
-
-  let record r c = r := c :: !r
-
-  let check calls testable loc expected_calls =
-    Alcotest.check (Alcotest.list testable) loc expected_calls (List.rev !calls)
-end
-
 let eval_tests =
   let branch = { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" } in
   let source = Source.Github_branch branch in

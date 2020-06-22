@@ -1,4 +1,5 @@
 open Opam_compiler
+open Import
 
 let error =
   let pp_error ppf = function `Unknown -> Format.fprintf ppf "Unknown" in
@@ -11,64 +12,60 @@ let parse_tests =
       `Quick,
       fun () ->
         let got = Source.parse s in
-        Alcotest.check (Alcotest.option (module Source)) __LOC__ expected got )
+        Alcotest.check (module Source) __LOC__ expected got )
   in
   [
     test "full branch syntax" "user/repo:branch"
-      (Some (Github_branch { user = "user"; repo = "repo"; branch = "branch" }));
+      (Github_branch { user = "user"; repo = "repo"; branch = "branch" });
     test "branches can have dashes" "user/repo:my-great-branch"
-      (Some
-         (Github_branch
-            { user = "user"; repo = "repo"; branch = "my-great-branch" }));
+      (Github_branch
+         { user = "user"; repo = "repo"; branch = "my-great-branch" });
     test "repo can be omitted and defaults to ocaml" "user:branch"
-      (Some (Github_branch { user = "user"; repo = "ocaml"; branch = "branch" }));
+      (Github_branch { user = "user"; repo = "ocaml"; branch = "branch" });
     test "repo with PR number" "user/repo#1234"
-      (Some (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
+      (Github_PR { user = "user"; repo = "repo"; number = 1234 });
     test "defaults to main repo" "#1234"
-      (Some (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
+      (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 });
+    test "directory name" "." (Local_source_dir ".");
   ]
 
-let git_url_tests =
-  let test_branch =
-    ( "branch",
-      `Quick,
-      fun () ->
-        let github_client = Helpers.github_client_fail_all in
-        let user = "USER" in
-        let repo = "REPO" in
-        let branch = "BRANCH" in
-        let expected = Ok "git+https://github.com/USER/REPO#BRANCH" in
-        let source = Source.Github_branch { user; repo; branch } in
-        let got = Source.git_url source github_client in
-        Alcotest.check Alcotest.(result string error) __LOC__ expected got )
-  in
-  let test_pr name github_response expected =
+let switch_target_tests =
+  let test name source ~github_response ~expected
+      ~expected_pr_source_branch_calls =
     ( name,
       `Quick,
       fun () ->
-        let calls = ref [] in
+        let recorder = Call_recorder.create () in
         let pr_source_branch pr =
-          calls := pr :: !calls;
-          github_response
+          Call_recorder.record recorder pr;
+          option_or_fail "No github response configured" github_response
         in
         let github_client = { Github_client.pr_source_branch } in
-        let user = "USER" in
-        let repo = "REPO" in
-        let number = 1234 in
-        let pr = { Pull_request.user; repo; number } in
-        let source = Source.Github_PR pr in
-        let got = Source.git_url source github_client in
+        let got = Source.switch_target source github_client in
         Alcotest.check Alcotest.(result string error) __LOC__ expected got;
-        Alcotest.check
-          (Alcotest.list (module Pull_request))
-          __LOC__ [ pr ] !calls )
+        Call_recorder.check recorder
+          (module Pull_request)
+          __LOC__ expected_pr_source_branch_calls )
+  in
+  let test_pr name github_response expected =
+    let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
+    test name (Source.Github_PR pr) ~github_response:(Some github_response)
+      ~expected ~expected_pr_source_branch_calls:[ pr ]
   in
   [
     test_pr "PR error" (Error `Unknown) (Error `Unknown);
     test_pr "PR ok"
       (Ok { Branch.user = "SRC_USER"; repo = "SRC_REPO"; branch = "SRC_BRANCH" })
       (Ok "git+https://github.com/SRC_USER/SRC_REPO#SRC_BRANCH");
-    test_branch;
+    test "branch"
+      (Source.Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
+      ~github_response:None
+      ~expected:(Ok "git+https://github.com/USER/REPO#BRANCH")
+      ~expected_pr_source_branch_calls:[];
+    test "local source dir" (Source.Local_source_dir "PATH")
+      ~github_response:None ~expected:(Ok "PATH")
+      ~expected_pr_source_branch_calls:[];
   ]
 
-let tests = [ ("Source parse", parse_tests); ("Source git_url", git_url_tests) ]
+let tests =
+  [ ("Source parse", parse_tests); ("Source git_url", switch_target_tests) ]

@@ -1,6 +1,9 @@
-type t = Github_branch of Branch.t | Github_PR of Pull_request.t
+type t =
+  | Github_branch of Branch.t
+  | Github_PR of Pull_request.t
+  | Local_source_dir of string
 
-val git_url : t -> Github_client.t -> (string, [ `Unknown ]) result
+val switch_target : t -> Github_client.t -> (string, [ `Unknown ]) result
 
 val switch_description : t -> string
 
@@ -10,6 +13,4 @@ val pp : Format.formatter -> t -> unit
 
 val equal : t -> t -> bool
 
-val parse : string -> t option
-
-val parse_exn : string -> t
+val parse : string -> t

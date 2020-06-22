@@ -7,7 +7,7 @@ let create switch_manager github_client source =
   Switch_manager.create_from_scratch switch_manager ~name:switch_name
     ~description
   >>= (fun () ->
-        Source.git_url source github_client >>| fun url ->
+        Source.switch_target source github_client >>| fun url ->
         Switch_manager.pin_add switch_manager ~name:switch_name url)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 
@@ -27,9 +27,9 @@ let info switch_manager source =
 type op = Create of Source.t | Update of Source.t | Info of Source.t
 
 let parse = function
-  | [| _; "create"; arg |] -> option_map (fun s -> Create s) (Source.parse arg)
-  | [| _; "update"; arg |] -> option_map (fun s -> Update s) (Source.parse arg)
-  | [| _; "info"; arg |] -> option_map (fun s -> Info s) (Source.parse arg)
+  | [| _; "create"; arg |] -> Some (Create (Source.parse arg))
+  | [| _; "update"; arg |] -> Some (Update (Source.parse arg))
+  | [| _; "info"; arg |] -> Some (Info (Source.parse arg))
   | _ -> None
 
 let eval op switch_manager github_client =
