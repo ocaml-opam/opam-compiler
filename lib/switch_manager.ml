@@ -4,7 +4,7 @@ type t = {
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
-  run_command : Bos.Cmd.t -> (unit, [ `Unknown ]) result;
+  run_command : Bos.Cmd.t -> (int, [ `Unknown ]) result;
   run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
 }
 
@@ -32,7 +32,10 @@ module Opam = struct
     |> Rresult.R.reword_error (fun _ -> `Unknown)
 
   let run_command cmd =
-    Bos.OS.Cmd.run cmd |> Rresult.R.reword_error (fun _ -> `Unknown)
+    match Bos.OS.Cmd.run_status cmd with
+    | Ok (`Exited n) -> Ok n
+    | Ok (`Signaled _) -> Error `Unknown
+    | Error _ -> Error `Unknown
 
   let run_out cmd =
     Bos.OS.Cmd.run_out cmd |> Bos.OS.Cmd.to_string
@@ -45,19 +48,23 @@ let real =
 
 let create t = t.create
 
+let run t cmd =
+  let open Rresult.R in
+  t.run_command cmd >>= function 0 -> Ok () | _ -> Error `Unknown
+
 let remove t ~name =
-  t.run_command
+  run t
     (let open Bos.Cmd in
     opam % "switch" % "remove" % Switch_name.to_string name)
 
 let pin_add t ~name url =
-  t.run_command
+  run t
     Bos.Cmd.(
       opam % "pin" % "add" % "--switch" % Switch_name.to_string name % "--yes"
       % ocaml_variants % url)
 
 let update t ~name =
-  t.run_command
+  run t
     (let open Bos.Cmd in
     opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
 
@@ -70,14 +77,15 @@ let reinstall t =
   let configure = Bos.Cmd.(v "./configure" % "--prefix" % prefix) in
   let make = Bos.Cmd.(v "make") in
   let make_install = Bos.Cmd.(v "make" % "install") in
-  t.run_command configure >>= fun () ->
-  t.run_command make >>= fun () -> t.run_command make_install
+  run t configure >>= fun () ->
+  run t make >>= fun () -> run t make_install
 
 let create_from_scratch switch_manager ~name ~description =
   match create switch_manager ~name ~description with
   | Ok () -> Ok ()
   | Error `Switch_exists ->
-      Rresult.R.bind (remove switch_manager ~name) (fun () ->
-          create switch_manager ~name ~description
-          |> Rresult.R.reword_error (fun _ -> `Unknown))
+      let open Rresult.R in
+      remove switch_manager ~name >>= fun () ->
+      create switch_manager ~name ~description
+      |> Rresult.R.reword_error (fun _ -> `Unknown)
   | Error `Unknown as e -> e

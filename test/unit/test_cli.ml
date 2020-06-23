@@ -34,8 +34,10 @@ let eval_create_tests =
               h
         in
         let run_command cmd =
+          let open Rresult.R in
           Call_recorder.record calls (Run cmd);
-          if List.mem "remove" (Bos.Cmd.to_list cmd) then remove_rv else Ok ()
+          (if List.mem "remove" (Bos.Cmd.to_list cmd) then remove_rv else Ok ())
+          >>| fun () -> 0
         in
         let switch_manager =
           { Helpers.switch_manager_fail_all with create; run_command }
@@ -97,7 +99,7 @@ let eval_reinstall_tests =
         let recorder = Call_recorder.create () in
         let run_command cmd =
           Call_recorder.record recorder (Call.Run cmd);
-          Ok ()
+          Ok 0
         in
         let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
         let switch_manager =
@@ -129,7 +131,7 @@ let eval_update_tests =
         let github_client = Helpers.github_client_fail_all in
         let run_command cmd =
           Call_recorder.record recorder (Call.Run cmd);
-          Ok ()
+          Ok 0
         in
         let switch_manager =
           { Helpers.switch_manager_fail_all with run_command }
