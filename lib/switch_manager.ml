@@ -1,5 +1,4 @@
 type t = {
-  info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   run_command : Bos.Cmd.t -> (int, [ `Unknown ]) result;
   run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
 }
@@ -9,13 +8,6 @@ let opam = Bos.Cmd.v "opam"
 let ocaml_variants = "ocaml-variants"
 
 module Opam = struct
-  let info ~name =
-    (let open Bos.Cmd in
-    opam % "show" % ocaml_variants % "--switch" % Switch_name.to_string name
-    % "-fsource-hash")
-    |> Bos.OS.Cmd.run_out |> Bos.OS.Cmd.to_string
-    |> Rresult.R.reword_error (fun _ -> `Unknown)
-
   let run_command cmd =
     match Bos.OS.Cmd.run_status cmd with
     | Ok (`Exited n) -> Ok n
@@ -29,7 +21,7 @@ end
 
 let real =
   let open Opam in
-  { info; run_command; run_out }
+  { run_command; run_out }
 
 let create t ~name ~description =
   let create_cmd =
@@ -61,8 +53,6 @@ let update t ~name =
   run t
     (let open Bos.Cmd in
     opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
-
-let info t = t.info
 
 let reinstall t =
   let open Rresult.R in

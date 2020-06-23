@@ -17,23 +17,11 @@ let update switch_manager source =
   Switch_manager.update switch_manager ~name:switch_name
   |> reword_error (fun `Unknown -> msgf "Cannot update switch")
 
-let info switch_manager source =
-  let open Rresult.R in
-  let switch_name = Source.global_switch_name source in
-  Switch_manager.info switch_manager ~name:switch_name
-  |> reword_error (fun `Unknown -> msgf "Could not get info about switch")
-  |> map print_endline
-
-type op =
-  | Create of Source.t
-  | Update of Source.t
-  | Info of Source.t
-  | Reinstall
+type op = Create of Source.t | Update of Source.t | Reinstall
 
 let parse = function
   | [| _; "create"; arg |] -> Some (Create (Source.parse arg))
   | [| _; "update"; arg |] -> Some (Update (Source.parse arg))
-  | [| _; "info"; arg |] -> Some (Info (Source.parse arg))
   | [| _; "reinstall" |] -> Some Reinstall
   | _ -> None
 
@@ -46,7 +34,6 @@ let eval op switch_manager github_client =
   match op with
   | Create s -> create switch_manager github_client s
   | Update s -> update switch_manager s
-  | Info s -> info switch_manager s
   | Reinstall -> reinstall switch_manager
 
 let run op switch_manager github_client =

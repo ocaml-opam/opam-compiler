@@ -1,5 +1,4 @@
 type t = {
-  info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   run_command : Bos.Cmd.t -> (int, [ `Unknown ]) result;
   run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
 }
@@ -12,7 +11,5 @@ val real : t
 val pin_add : t -> name:Switch_name.t -> string -> (unit, [ `Unknown ]) result
 
 val update : t -> name:Switch_name.t -> (unit, [ `Unknown ]) result
-
-val info : t -> name:Switch_name.t -> (string, [ `Unknown ]) result
 
 val reinstall : t -> (unit, [ `Unknown ]) result

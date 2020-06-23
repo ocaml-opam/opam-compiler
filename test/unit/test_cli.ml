@@ -83,9 +83,7 @@ let eval_reinstall_tests =
           Ok 0
         in
         let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
-        let switch_manager =
-          { Helpers.switch_manager_fail_all with run_command; run_out }
-        in
+        let switch_manager = { Switch_manager.run_command; run_out } in
         let github_client = Helpers.github_client_fail_all in
         let expected = Ok () in
         let got = Cli.eval Reinstall switch_manager github_client in
