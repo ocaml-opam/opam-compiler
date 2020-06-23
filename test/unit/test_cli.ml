@@ -5,14 +5,12 @@ let msg = Alcotest.testable Rresult.R.pp_msg ( = )
 module Call = struct
   type t =
     | Create of { name : Switch_name.t; description : string }
-    | Update of Switch_name.t
     | Run of Bos.Cmd.t
 
   let pp ppf = function
     | Create { name; description } ->
         Format.fprintf ppf "Create { name = %a; description = %S }"
           Switch_name.pp name description
-    | Update name -> Format.fprintf ppf "Update %a" Switch_name.pp name
     | Run cmd -> Format.fprintf ppf "Run %a" Bos.Cmd.pp cmd
 
   let equal = ( = )
@@ -118,11 +116,13 @@ let eval_update_tests =
       fun () ->
         let recorder = Call_recorder.create () in
         let github_client = Helpers.github_client_fail_all in
-        let update ~name =
-          Call_recorder.record recorder (Call.Update name);
+        let run_command cmd =
+          Call_recorder.record recorder (Call.Run cmd);
           Ok ()
         in
-        let switch_manager = { Helpers.switch_manager_fail_all with update } in
+        let switch_manager =
+          { Helpers.switch_manager_fail_all with run_command }
+        in
         let branch =
           { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" }
         in
@@ -133,7 +133,12 @@ let eval_update_tests =
         Call_recorder.check recorder
           (module Call)
           __LOC__
-          [ Update (Switch_name.of_string_exn "USER-REPO-BRANCH") ] );
+          [
+            Run
+              Bos.Cmd.(
+                v "opam" % "update" % "--switch" % "USER-REPO-BRANCH"
+                % "ocaml-variants");
+          ] );
   ]
 
 let tests =

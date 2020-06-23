@@ -3,7 +3,6 @@ type t = {
     name:Switch_name.t ->
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
-  update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   reinstall : unit -> (unit, [ `Unknown ]) result;
   run_command : Bos.Cmd.t -> (unit, [ `Unknown ]) result;
@@ -24,12 +23,6 @@ module Opam = struct
     | `Exited 0 -> Ok ()
     | `Exited 2 -> Error `Switch_exists
     | _ -> Error `Unknown
-
-  let update ~name =
-    (let open Bos.Cmd in
-    opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
-    |> Bos.OS.Cmd.run
-    |> Rresult.R.reword_error (fun _ -> `Unknown)
 
   let info ~name =
     (let open Bos.Cmd in
@@ -55,7 +48,7 @@ end
 
 let real =
   let open Opam in
-  { create; update; info; reinstall; run_command }
+  { create; info; reinstall; run_command }
 
 let create t = t.create
 
@@ -70,7 +63,10 @@ let pin_add t ~name url =
       opam % "pin" % "add" % "--switch" % Switch_name.to_string name % "--yes"
       % ocaml_variants % url)
 
-let update t = t.update
+let update t ~name =
+  t.run_command
+    (let open Bos.Cmd in
+    opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
 
 let info t = t.info
 
