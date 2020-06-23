@@ -5,12 +5,14 @@ let msg = Alcotest.testable Rresult.R.pp_msg ( = )
 module Call = struct
   type t =
     | Create of { name : Switch_name.t; description : string }
+    | Update of Switch_name.t
     | Run of Bos.Cmd.t
 
   let pp ppf = function
     | Create { name; description } ->
         Format.fprintf ppf "Create { name = %a; description = %S }"
           Switch_name.pp name description
+    | Update name -> Format.fprintf ppf "Update %a" Switch_name.pp name
     | Run cmd -> Format.fprintf ppf "Run %a" Bos.Cmd.pp cmd
 
   let equal = ( = )
@@ -109,8 +111,34 @@ let eval_reinstall_tests =
         Call_recorder.check recorder Alcotest.unit __LOC__ [ () ] );
   ]
 
+let eval_update_tests =
+  [
+    ( "update",
+      `Quick,
+      fun () ->
+        let recorder = Call_recorder.create () in
+        let github_client = Helpers.github_client_fail_all in
+        let update ~name =
+          Call_recorder.record recorder (Call.Update name);
+          Ok ()
+        in
+        let switch_manager = { Helpers.switch_manager_fail_all with update } in
+        let branch =
+          { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" }
+        in
+        let source = Source.Github_branch branch in
+        let got = Cli.eval (Update source) switch_manager github_client in
+        let expected = Ok () in
+        Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
+        Call_recorder.check recorder
+          (module Call)
+          __LOC__
+          [ Update (Switch_name.of_string_exn "USER-REPO-BRANCH") ] );
+  ]
+
 let tests =
   [
     ("Cli eval create", eval_create_tests);
     ("Cli eval reinstall", eval_reinstall_tests);
+    ("Cli eval update", eval_update_tests);
   ]
