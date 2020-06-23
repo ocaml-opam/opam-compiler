@@ -1,20 +1,19 @@
 open! Import
 
-let create switch_manager github_client source =
+let create runner github_client source =
   let switch_name = Source.global_switch_name source in
   let description = Source.switch_description source in
   let open Rresult.R in
-  Switch_manager.create_from_scratch switch_manager ~name:switch_name
-    ~description
+  Opam.create_from_scratch runner ~name:switch_name ~description
   >>= (fun () ->
         Source.switch_target source github_client >>= fun url ->
-        Switch_manager.pin_add switch_manager ~name:switch_name url)
+        Opam.pin_add runner ~name:switch_name url)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 
-let update switch_manager source =
+let update runner source =
   let open Rresult.R in
   let switch_name = Source.global_switch_name source in
-  Switch_manager.update switch_manager ~name:switch_name
+  Opam.update runner ~name:switch_name
   |> reword_error (fun `Unknown -> msgf "Cannot update switch")
 
 type op = Create of Source.t | Update of Source.t | Reinstall
@@ -25,21 +24,21 @@ let parse = function
   | [| _; "reinstall" |] -> Some Reinstall
   | _ -> None
 
-let reinstall switch_manager =
+let reinstall runner =
   let open Rresult.R in
-  Switch_manager.reinstall switch_manager
+  Opam.reinstall runner
   |> reword_error (fun `Unknown -> msgf "Could not reinstall")
 
-let eval op switch_manager github_client =
+let eval op runner github_client =
   match op with
-  | Create s -> create switch_manager github_client s
-  | Update s -> update switch_manager s
-  | Reinstall -> reinstall switch_manager
+  | Create s -> create runner github_client s
+  | Update s -> update runner s
+  | Reinstall -> reinstall runner
 
-let run op switch_manager github_client =
-  eval op switch_manager github_client |> Rresult.R.failwith_error_msg
+let run op runner github_client =
+  eval op runner github_client |> Rresult.R.failwith_error_msg
 
 let main () =
   match parse Sys.argv with
-  | Some op -> run op Switch_manager.real Github_client.real
+  | Some op -> run op Runner.real Github_client.real
   | None -> assert false

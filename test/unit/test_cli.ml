@@ -23,11 +23,9 @@ let eval_create_tests =
                 h )
           else Ok 0
         in
-        let switch_manager =
-          { Helpers.switch_manager_fail_all with run_command }
-        in
+        let runner = { Helpers.runner_fail_all with run_command } in
         let github_client = Helpers.github_client_fail_all in
-        let got = Cli.eval (Create source) switch_manager github_client in
+        let got = Cli.eval (Create source) runner github_client in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         Call_recorder.check calls (module Bos.Cmd) __LOC__ expected_calls )
   in
@@ -83,10 +81,10 @@ let eval_reinstall_tests =
           Ok 0
         in
         let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
-        let switch_manager = { Switch_manager.run_command; run_out } in
+        let runner = { Runner.run_command; run_out } in
         let github_client = Helpers.github_client_fail_all in
         let expected = Ok () in
-        let got = Cli.eval Reinstall switch_manager github_client in
+        let got = Cli.eval Reinstall runner github_client in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         Call_recorder.check recorder
           (module Bos.Cmd)
@@ -110,14 +108,12 @@ let eval_update_tests =
           Call_recorder.record recorder cmd;
           Ok 0
         in
-        let switch_manager =
-          { Helpers.switch_manager_fail_all with run_command }
-        in
+        let runner = { Helpers.runner_fail_all with run_command } in
         let branch =
           { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" }
         in
         let source = Source.Github_branch branch in
-        let got = Cli.eval (Update source) switch_manager github_client in
+        let got = Cli.eval (Update source) runner github_client in
         let expected = Ok () in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         Call_recorder.check recorder
