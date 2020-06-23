@@ -4,8 +4,8 @@ type t = {
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
-  reinstall : unit -> (unit, [ `Unknown ]) result;
   run_command : Bos.Cmd.t -> (unit, [ `Unknown ]) result;
+  run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
 }
 
 let opam = Bos.Cmd.v "opam"
@@ -31,24 +31,17 @@ module Opam = struct
     |> Bos.OS.Cmd.run_out |> Bos.OS.Cmd.to_string
     |> Rresult.R.reword_error (fun _ -> `Unknown)
 
-  let reinstall () =
-    (let open Rresult.R in
-    let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
-    Bos.OS.Cmd.run_out prefix_cmd |> Bos.OS.Cmd.to_string >>= fun prefix ->
-    let configure = Bos.Cmd.(v "./configure" % "--prefix" % prefix) in
-    let make = Bos.Cmd.(v "make") in
-    let make_install = Bos.Cmd.(v "make" % "install") in
-    Bos.OS.Cmd.run configure >>= fun () ->
-    Bos.OS.Cmd.run make >>= fun () -> Bos.OS.Cmd.run make_install)
-    |> Rresult.R.reword_error (fun _ -> `Unknown)
-
   let run_command cmd =
     Bos.OS.Cmd.run cmd |> Rresult.R.reword_error (fun _ -> `Unknown)
+
+  let run_out cmd =
+    Bos.OS.Cmd.run_out cmd |> Bos.OS.Cmd.to_string
+    |> Rresult.R.reword_error (fun _ -> `Unknown)
 end
 
 let real =
   let open Opam in
-  { create; info; reinstall; run_command }
+  { create; info; run_command; run_out }
 
 let create t = t.create
 
@@ -70,7 +63,15 @@ let update t ~name =
 
 let info t = t.info
 
-let reinstall t = t.reinstall ()
+let reinstall t =
+  let open Rresult.R in
+  let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
+  t.run_out prefix_cmd >>= fun prefix ->
+  let configure = Bos.Cmd.(v "./configure" % "--prefix" % prefix) in
+  let make = Bos.Cmd.(v "make") in
+  let make_install = Bos.Cmd.(v "make" % "install") in
+  t.run_command configure >>= fun () ->
+  t.run_command make >>= fun () -> t.run_command make_install
 
 let create_from_scratch switch_manager ~name ~description =
   match create switch_manager ~name ~description with

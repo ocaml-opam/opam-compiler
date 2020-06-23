@@ -95,18 +95,29 @@ let eval_reinstall_tests =
       `Quick,
       fun () ->
         let recorder = Call_recorder.create () in
-        let reinstall () =
-          Call_recorder.record recorder ();
+        let run_command cmd =
+          Call_recorder.record recorder (Call.Run cmd);
           Ok ()
         in
+        let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
         let switch_manager =
-          { Helpers.switch_manager_fail_all with reinstall }
+          { Helpers.switch_manager_fail_all with run_command; run_out }
         in
         let github_client = Helpers.github_client_fail_all in
         let expected = Ok () in
         let got = Cli.eval Reinstall switch_manager github_client in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
-        Call_recorder.check recorder Alcotest.unit __LOC__ [ () ] );
+        Call_recorder.check recorder
+          (module Call)
+          __LOC__
+          Bos.Cmd.
+            [
+              Run
+                ( v "./configure" % "--prefix"
+                % "$('opam' 'config' 'var' 'prefix')" );
+              Run (v "make");
+              Run (v "make" % "install");
+            ] );
   ]
 
 let eval_update_tests =
