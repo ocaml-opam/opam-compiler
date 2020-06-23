@@ -4,10 +4,10 @@ type t = {
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
   remove : name:Switch_name.t -> (unit, [ `Unknown ]) result;
-  pin_add : name:Switch_name.t -> string -> unit;
   update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   reinstall : unit -> (unit, [ `Unknown ]) result;
+  run_command : Bos.Cmd.t -> (unit, [ `Unknown ]) result;
 }
 
 val create_from_scratch :
@@ -15,7 +15,7 @@ val create_from_scratch :
 
 val real : t
 
-val pin_add : t -> name:Switch_name.t -> string -> unit
+val pin_add : t -> name:Switch_name.t -> string -> (unit, [ `Unknown ]) result
 
 val update : t -> name:Switch_name.t -> (unit, [ `Unknown ]) result
 

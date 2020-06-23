@@ -7,7 +7,7 @@ let create switch_manager github_client source =
   Switch_manager.create_from_scratch switch_manager ~name:switch_name
     ~description
   >>= (fun () ->
-        Source.switch_target source github_client >>| fun url ->
+        Source.switch_target source github_client >>= fun url ->
         Switch_manager.pin_add switch_manager ~name:switch_name url)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 

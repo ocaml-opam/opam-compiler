@@ -6,7 +6,7 @@ module Call = struct
   type t =
     | Create of { name : Switch_name.t; description : string }
     | Remove of { name : Switch_name.t }
-    | Pin_add of { name : Switch_name.t; url : string }
+    | Run of Bos.Cmd.t
 
   let pp ppf = function
     | Create { name; description } ->
@@ -14,9 +14,7 @@ module Call = struct
           Switch_name.pp name description
     | Remove { name } ->
         Format.fprintf ppf "Remove { name = %a }" Switch_name.pp name
-    | Pin_add { name; url } ->
-        Format.fprintf ppf "Pin_add { name = %a; url = %S }" Switch_name.pp name
-          url
+    | Run cmd -> Format.fprintf ppf "Run %a" Bos.Cmd.pp cmd
 
   let equal = ( = )
 end
@@ -42,11 +40,12 @@ let eval_create_tests =
           Call_recorder.record calls (Remove { name });
           remove_rv
         in
-        let pin_add ~name url =
-          Call_recorder.record calls (Pin_add { name; url })
+        let run_command cmd =
+          Call_recorder.record calls (Run cmd);
+          Ok ()
         in
         let switch_manager =
-          { Helpers.switch_manager_fail_all with create; remove; pin_add }
+          { Helpers.switch_manager_fail_all with create; remove; run_command }
         in
         let github_client = Helpers.github_client_fail_all in
         let got = Cli.eval (Create source) switch_manager github_client in
@@ -60,7 +59,10 @@ let eval_create_tests =
   in
   let remove_call = Call.Remove { name = switch_name } in
   let pin_add_call =
-    Call.Pin_add { name = switch_name; url = Branch.git_url branch }
+    Call.Run
+      Bos.Cmd.(
+        v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
+        % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH")
   in
   [
     test "everything ok" ~create_rvs:[ Ok () ] ~remove_rv:(Ok ())

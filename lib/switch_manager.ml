@@ -4,17 +4,17 @@ type t = {
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
   remove : name:Switch_name.t -> (unit, [ `Unknown ]) result;
-  pin_add : name:Switch_name.t -> string -> unit;
   update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   reinstall : unit -> (unit, [ `Unknown ]) result;
+  run_command : Bos.Cmd.t -> (unit, [ `Unknown ]) result;
 }
 
+let opam = Bos.Cmd.v "opam"
+
+let ocaml_variants = "ocaml-variants"
+
 module Opam = struct
-  let opam = Bos.Cmd.v "opam"
-
-  let ocaml_variants = "ocaml-variants"
-
   let create ~name ~description =
     let create_cmd =
       let open Bos.Cmd in
@@ -31,12 +31,6 @@ module Opam = struct
       (let open Bos.Cmd in
       opam % "switch" % "remove" % Switch_name.to_string name)
     |> Rresult.R.reword_error (fun _ -> `Unknown)
-
-  let pin_add ~name url =
-    (let open Bos.Cmd in
-    opam % "pin" % "add" % "--switch" % Switch_name.to_string name % "--yes"
-    % ocaml_variants % url)
-    |> Bos.OS.Cmd.run |> Rresult.R.failwith_error_msg
 
   let update ~name =
     (let open Bos.Cmd in
@@ -61,17 +55,26 @@ module Opam = struct
     Bos.OS.Cmd.run configure >>= fun () ->
     Bos.OS.Cmd.run make >>= fun () -> Bos.OS.Cmd.run make_install)
     |> Rresult.R.reword_error (fun _ -> `Unknown)
+
+  let run_command cmd =
+    Bos.OS.Cmd.run cmd |> Rresult.R.reword_error (fun _ -> `Unknown)
 end
 
 let real =
   let open Opam in
-  { create; remove; pin_add; update; info; reinstall }
+  { create; remove; update; info; reinstall; run_command }
 
 let create t = t.create
 
 let remove t = t.remove
 
-let pin_add t = t.pin_add
+let pin_add t ~name url =
+  let cmd =
+    Bos.Cmd.(
+      opam % "pin" % "add" % "--switch" % Switch_name.to_string name % "--yes"
+      % ocaml_variants % url)
+  in
+  t.run_command cmd
 
 let update t = t.update
 
