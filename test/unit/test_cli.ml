@@ -5,15 +5,12 @@ let msg = Alcotest.testable Rresult.R.pp_msg ( = )
 module Call = struct
   type t =
     | Create of { name : Switch_name.t; description : string }
-    | Remove of { name : Switch_name.t }
     | Run of Bos.Cmd.t
 
   let pp ppf = function
     | Create { name; description } ->
         Format.fprintf ppf "Create { name = %a; description = %S }"
           Switch_name.pp name description
-    | Remove { name } ->
-        Format.fprintf ppf "Remove { name = %a }" Switch_name.pp name
     | Run cmd -> Format.fprintf ppf "Run %a" Bos.Cmd.pp cmd
 
   let equal = ( = )
@@ -36,16 +33,12 @@ let eval_create_tests =
               create_rvs := t;
               h
         in
-        let remove ~name =
-          Call_recorder.record calls (Remove { name });
-          remove_rv
-        in
         let run_command cmd =
           Call_recorder.record calls (Run cmd);
-          Ok ()
+          if List.mem "remove" (Bos.Cmd.to_list cmd) then remove_rv else Ok ()
         in
         let switch_manager =
-          { Helpers.switch_manager_fail_all with create; remove; run_command }
+          { Helpers.switch_manager_fail_all with create; run_command }
         in
         let github_client = Helpers.github_client_fail_all in
         let got = Cli.eval (Create source) switch_manager github_client in
@@ -57,7 +50,9 @@ let eval_create_tests =
     Call.Create
       { name = switch_name; description = Source.switch_description source }
   in
-  let remove_call = Call.Remove { name = switch_name } in
+  let remove_call =
+    Call.Run Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH")
+  in
   let pin_add_call =
     Call.Run
       Bos.Cmd.(

@@ -3,7 +3,6 @@ type t = {
     name:Switch_name.t ->
     description:string ->
     (unit, [ `Unknown | `Switch_exists ]) result;
-  remove : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   update : name:Switch_name.t -> (unit, [ `Unknown ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   reinstall : unit -> (unit, [ `Unknown ]) result;
