@@ -2,20 +2,6 @@ open Opam_compiler
 
 let msg = Alcotest.testable Rresult.R.pp_msg ( = )
 
-module Call = struct
-  type t =
-    | Create of { name : Switch_name.t; description : string }
-    | Run of Bos.Cmd.t
-
-  let pp ppf = function
-    | Create { name; description } ->
-        Format.fprintf ppf "Create { name = %a; description = %S }"
-          Switch_name.pp name description
-    | Run cmd -> Format.fprintf ppf "Run %a" Bos.Cmd.pp cmd
-
-  let equal = ( = )
-end
-
 let eval_create_tests =
   let branch = { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" } in
   let source = Source.Github_branch branch in
@@ -25,67 +11,62 @@ let eval_create_tests =
       fun () ->
         let create_rvs = ref create_rvs in
         let calls = Call_recorder.create () in
-        let create ~name ~description =
-          Call_recorder.record calls (Call.Create { name; description });
-          match !create_rvs with
-          | [] -> assert false
-          | h :: t ->
-              create_rvs := t;
-              h
-        in
         let run_command cmd =
-          let open Rresult.R in
-          Call_recorder.record calls (Run cmd);
-          (if List.mem "remove" (Bos.Cmd.to_list cmd) then remove_rv else Ok ())
-          >>| fun () -> 0
+          Call_recorder.record calls cmd;
+          let parts = Bos.Cmd.to_list cmd in
+          if List.mem "remove" parts then remove_rv
+          else if List.mem "create" parts then (
+            match !create_rvs with
+            | [] -> assert false
+            | h :: t ->
+                create_rvs := t;
+                h )
+          else Ok 0
         in
         let switch_manager =
-          { Helpers.switch_manager_fail_all with create; run_command }
+          { Helpers.switch_manager_fail_all with run_command }
         in
         let github_client = Helpers.github_client_fail_all in
         let got = Cli.eval (Create source) switch_manager github_client in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
-        Call_recorder.check calls (module Call) __LOC__ expected_calls )
+        Call_recorder.check calls (module Bos.Cmd) __LOC__ expected_calls )
   in
-  let switch_name = Switch_name.of_string_exn "USER-REPO-BRANCH" in
   let create_call =
-    Call.Create
-      { name = switch_name; description = Source.switch_description source }
+    Bos.Cmd.(
+      v "opam" % "switch" % "create" % "USER-REPO-BRANCH" % "--empty"
+      % "--description" % "[opam-compiler] USER/REPO:BRANCH")
   in
   let remove_call =
-    Call.Run Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH")
+    Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH")
   in
   let pin_add_call =
-    Call.Run
-      Bos.Cmd.(
-        v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
-        % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH")
+    Bos.Cmd.(
+      v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
+      % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH")
   in
   [
-    test "everything ok" ~create_rvs:[ Ok () ] ~remove_rv:(Ok ())
+    test "everything ok" ~create_rvs:[ Ok 0 ] ~remove_rv:(Ok 0)
       ~expected:(Ok ())
       ~expected_calls:[ create_call; pin_add_call ];
     test "first create fails"
       ~create_rvs:[ Error `Unknown ]
-      ~remove_rv:(Ok ())
+      ~remove_rv:(Ok 0)
       ~expected:(Error (`Msg "Cannot create switch"))
       ~expected_calls:[ create_call ];
-    test "switch exists, rest ok"
-      ~create_rvs:[ Error `Switch_exists; Ok () ]
-      ~remove_rv:(Ok ()) ~expected:(Ok ())
+    test "switch exists, rest ok" ~create_rvs:[ Ok 2; Ok 0 ] ~remove_rv:(Ok 0)
+      ~expected:(Ok ())
       ~expected_calls:[ create_call; remove_call; create_call; pin_add_call ];
-    test "switch exists, remove fails"
-      ~create_rvs:[ Error `Switch_exists; Ok () ]
+    test "switch exists, remove fails" ~create_rvs:[ Ok 2; Ok 0 ]
       ~remove_rv:(Error `Unknown)
       ~expected:(Error (`Msg "Cannot create switch"))
       ~expected_calls:[ create_call; remove_call ];
     test "switch exists, remove ok, create fails"
-      ~create_rvs:[ Error `Switch_exists; Error `Unknown ]
+      ~create_rvs:[ Ok 2; Error `Unknown ]
       ~remove_rv:(Error `Unknown)
       ~expected:(Error (`Msg "Cannot create switch"))
       ~expected_calls:[ create_call; remove_call ];
     test "switch exists, remove ok, switch still exists"
-      ~create_rvs:[ Error `Switch_exists; Error `Switch_exists ]
+      ~create_rvs:[ Ok 2; Ok 2 ]
       ~remove_rv:(Error `Unknown)
       ~expected:(Error (`Msg "Cannot create switch"))
       ~expected_calls:[ create_call; remove_call ];
@@ -98,7 +79,7 @@ let eval_reinstall_tests =
       fun () ->
         let recorder = Call_recorder.create () in
         let run_command cmd =
-          Call_recorder.record recorder (Call.Run cmd);
+          Call_recorder.record recorder cmd;
           Ok 0
         in
         let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
@@ -110,15 +91,13 @@ let eval_reinstall_tests =
         let got = Cli.eval Reinstall switch_manager github_client in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         Call_recorder.check recorder
-          (module Call)
+          (module Bos.Cmd)
           __LOC__
           Bos.Cmd.
             [
-              Run
-                ( v "./configure" % "--prefix"
-                % "$('opam' 'config' 'var' 'prefix')" );
-              Run (v "make");
-              Run (v "make" % "install");
+              v "./configure" % "--prefix" % "$('opam' 'config' 'var' 'prefix')";
+              v "make";
+              v "make" % "install";
             ] );
   ]
 
@@ -130,7 +109,7 @@ let eval_update_tests =
         let recorder = Call_recorder.create () in
         let github_client = Helpers.github_client_fail_all in
         let run_command cmd =
-          Call_recorder.record recorder (Call.Run cmd);
+          Call_recorder.record recorder cmd;
           Ok 0
         in
         let switch_manager =
@@ -144,13 +123,12 @@ let eval_update_tests =
         let expected = Ok () in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         Call_recorder.check recorder
-          (module Call)
+          (module Bos.Cmd)
           __LOC__
           [
-            Run
-              Bos.Cmd.(
-                v "opam" % "update" % "--switch" % "USER-REPO-BRANCH"
-                % "ocaml-variants");
+            Bos.Cmd.(
+              v "opam" % "update" % "--switch" % "USER-REPO-BRANCH"
+              % "ocaml-variants");
           ] );
   ]
 

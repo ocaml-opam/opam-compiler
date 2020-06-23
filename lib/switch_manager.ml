@@ -1,8 +1,4 @@
 type t = {
-  create :
-    name:Switch_name.t ->
-    description:string ->
-    (unit, [ `Unknown | `Switch_exists ]) result;
   info : name:Switch_name.t -> (string, [ `Unknown ]) result;
   run_command : Bos.Cmd.t -> (int, [ `Unknown ]) result;
   run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
@@ -13,17 +9,6 @@ let opam = Bos.Cmd.v "opam"
 let ocaml_variants = "ocaml-variants"
 
 module Opam = struct
-  let create ~name ~description =
-    let create_cmd =
-      let open Bos.Cmd in
-      opam % "switch" % "create" % Switch_name.to_string name % "--empty"
-      % "--description" % description
-    in
-    Bos.OS.Cmd.run_status create_cmd |> Rresult.R.failwith_error_msg |> function
-    | `Exited 0 -> Ok ()
-    | `Exited 2 -> Error `Switch_exists
-    | _ -> Error `Unknown
-
   let info ~name =
     (let open Bos.Cmd in
     opam % "show" % ocaml_variants % "--switch" % Switch_name.to_string name
@@ -44,9 +29,18 @@ end
 
 let real =
   let open Opam in
-  { create; info; run_command; run_out }
+  { info; run_command; run_out }
 
-let create t = t.create
+let create t ~name ~description =
+  let create_cmd =
+    let open Bos.Cmd in
+    opam % "switch" % "create" % Switch_name.to_string name % "--empty"
+    % "--description" % description
+  in
+  match t.run_command create_cmd with
+  | Ok 0 -> Ok ()
+  | Ok 2 -> Error `Switch_exists
+  | _ -> Error `Unknown
 
 let run t cmd =
   let open Rresult.R in
