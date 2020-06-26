@@ -1,5 +1,4 @@
 open Opam_compiler
-open Import
 
 let error =
   let pp_error ppf = function `Unknown -> Format.fprintf ppf "Unknown" in
@@ -30,41 +29,41 @@ let parse_tests =
   ]
 
 let switch_target_tests =
-  let test name source ~github_response ~expected
-      ~expected_pr_source_branch_calls =
-    ( name,
-      `Quick,
-      fun () ->
-        let recorder = Call_recorder.create () in
-        let pr_source_branch pr =
-          Call_recorder.record recorder pr;
-          option_or_fail "No github response configured" github_response
-        in
-        let github_client = { Github_client.pr_source_branch } in
-        let got = Source.switch_target source github_client in
-        Alcotest.check Alcotest.(result string error) __LOC__ expected got;
-        Call_recorder.check recorder
-          (module Pull_request)
-          __LOC__ expected_pr_source_branch_calls )
+  let test name source ~expectations ~expected =
+    Deferred.test_case
+      ( name,
+        `Quick,
+        fun d ->
+          let pr_source_branch =
+            Mock.create d (module Pull_request) __LOC__ expectations
+          in
+          let github_client = { Github_client.pr_source_branch } in
+          let got = Source.switch_target source github_client in
+          Alcotest.check Alcotest.(result string error) __LOC__ expected got )
   in
-  let test_pr name github_response expected =
-    let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
-    test name (Source.Github_PR pr) ~github_response:(Some github_response)
-      ~expected ~expected_pr_source_branch_calls:[ pr ]
-  in
+  let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
   [
-    test_pr "PR error" (Error `Unknown) (Error `Unknown);
-    test_pr "PR ok"
-      (Ok { Branch.user = "SRC_USER"; repo = "SRC_REPO"; branch = "SRC_BRANCH" })
-      (Ok "git+https://github.com/SRC_USER/SRC_REPO#SRC_BRANCH");
+    test "PR error" (Github_PR pr)
+      ~expectations:[ Mock.expect pr ~and_return:(Error `Unknown) ]
+      ~expected:(Error `Unknown);
+    test "PR ok" (Github_PR pr)
+      ~expectations:
+        [
+          Mock.expect pr
+            ~and_return:
+              (Ok
+                 {
+                   Branch.user = "SRC_USER";
+                   repo = "SRC_REPO";
+                   branch = "SRC_BRANCH";
+                 });
+        ]
+      ~expected:(Ok "git+https://github.com/SRC_USER/SRC_REPO#SRC_BRANCH");
     test "branch"
-      (Source.Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
-      ~github_response:None
-      ~expected:(Ok "git+https://github.com/USER/REPO#BRANCH")
-      ~expected_pr_source_branch_calls:[];
-    test "local source dir" (Source.Local_source_dir "PATH")
-      ~github_response:None ~expected:(Ok "PATH")
-      ~expected_pr_source_branch_calls:[];
+      (Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
+      ~expectations:[] ~expected:(Ok "git+https://github.com/USER/REPO#BRANCH");
+    test "local source dir" (Local_source_dir "PATH") ~expectations:[]
+      ~expected:(Ok "PATH");
   ]
 
 let tests =
