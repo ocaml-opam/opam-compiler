@@ -1,5 +1,3 @@
-let option_get ~default = function Some x -> x | None -> default
-
 let option_pair ao bo =
   match (ao, bo) with
   | Some a, Some b -> Some (a, b)

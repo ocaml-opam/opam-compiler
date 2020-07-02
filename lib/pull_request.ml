@@ -24,7 +24,7 @@ let parse s =
   |> option_map (fun g ->
          let user, repo =
            option_pair (re_group_get_opt g 1) (re_group_get_opt g 2)
-           |> option_get ~default:("ocaml", "ocaml")
+           |> Option.value ~default:("ocaml", "ocaml")
          in
          let number = int_of_string (Re.Group.get g 3) in
          { user; repo; number })
