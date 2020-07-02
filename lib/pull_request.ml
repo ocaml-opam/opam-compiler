@@ -21,7 +21,7 @@ let parse s =
          ])
   in
   Re.exec_opt re_pr s
-  |> option_map (fun g ->
+  |> Option.map (fun g ->
          let user, repo =
            option_pair (re_group_get_opt g 1) (re_group_get_opt g 2)
            |> Option.value ~default:("ocaml", "ocaml")
