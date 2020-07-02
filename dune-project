@@ -16,7 +16,7 @@
  (tags (flags:plugin))
  (depends
   (ocaml
-   (>= 4.03.0))
+   (>= 4.08.0))
   bos
   github-unix
   lwt_ssl

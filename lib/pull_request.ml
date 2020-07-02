@@ -21,10 +21,13 @@ let parse s =
          ])
   in
   Re.exec_opt re_pr s
-  |> option_map (fun g ->
+  |> Option.map (fun g ->
+         let ( let* ) = Option.bind in
          let user, repo =
-           option_pair (re_group_get_opt g 1) (re_group_get_opt g 2)
-           |> option_get ~default:("ocaml", "ocaml")
+           (let* user = re_group_get_opt g 1 in
+            let* repo = re_group_get_opt g 2 in
+            Some (user, repo))
+           |> Option.value ~default:("ocaml", "ocaml")
          in
          let number = int_of_string (Re.Group.get g 3) in
          { user; repo; number })
