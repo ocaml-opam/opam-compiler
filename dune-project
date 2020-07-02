@@ -18,6 +18,7 @@
   (ocaml
    (>= 4.08.0))
   bos
+  cmdliner
   github-unix
   lwt_ssl
   re
