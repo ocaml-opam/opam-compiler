@@ -14,11 +14,11 @@ let eval_tests =
           let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
           let runner = { Runner.run_command; run_out } in
           let github_client = Helpers.github_client_fail_all in
-          let got = Cli.eval action runner github_client in
+          let got = Op.eval action runner github_client in
           Alcotest.check Alcotest.(result unit msg) __LOC__ expected got )
   in
   let create =
-    Cli.Create
+    Op.Create
       (Github_branch { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" })
   in
   let create_call =
@@ -104,4 +104,4 @@ let eval_tests =
       ~expected:(Ok ());
   ]
 
-let tests = [ ("Cli eval", eval_tests) ]
+let tests = [ ("Op eval", eval_tests) ]

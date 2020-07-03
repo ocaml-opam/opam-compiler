@@ -1,44 +1,37 @@
 open! Import
 
-let create runner github_client source =
-  let switch_name = Source.global_switch_name source in
-  let description = Source.switch_description source in
-  let open Rresult.R in
-  Opam.create_from_scratch runner ~name:switch_name ~description
-  >>= (fun () ->
-        Source.switch_target source github_client >>= fun url ->
-        Opam.pin_add runner ~name:switch_name url)
-  |> reword_error (fun `Unknown -> msgf "Cannot create switch")
+let source =
+  let open Cmdliner.Arg in
+  required (pos 0 (some string) None (info []))
 
-let update runner source =
-  let open Rresult.R in
-  let switch_name = Source.global_switch_name source in
-  Opam.update runner ~name:switch_name
-  |> reword_error (fun `Unknown -> msgf "Cannot update switch")
+let op_create s = Op.Create (Source.parse s)
 
-type op = Create of Source.t | Update of Source.t | Reinstall
+let op_update s = Op.Update (Source.parse s)
 
-let parse = function
-  | [| _; "create"; arg |] -> Some (Create (Source.parse arg))
-  | [| _; "update"; arg |] -> Some (Update (Source.parse arg))
-  | [| _; "reinstall" |] -> Some Reinstall
-  | _ -> None
+let create =
+  let open Cmdliner.Term in
+  (const op_create $ source, info "create")
 
-let reinstall runner =
-  let open Rresult.R in
-  Opam.reinstall runner
-  |> reword_error (fun `Unknown -> msgf "Could not reinstall")
+let update =
+  let open Cmdliner.Term in
+  (const op_update $ source, info "update")
 
-let eval op runner github_client =
-  match op with
-  | Create s -> create runner github_client s
-  | Update s -> update runner s
-  | Reinstall -> reinstall runner
+let reinstall =
+  let open Cmdliner.Term in
+  (const Op.Reinstall, info "reinstall")
 
-let run op runner github_client =
-  eval op runner github_client |> Rresult.R.failwith_error_msg
+let default =
+  let open Cmdliner.Term in
+  (ret (pure (`Help (`Auto, None))), info "opam-compiler")
 
 let main () =
-  match parse Sys.argv with
-  | Some op -> run op Runner.real Github_client.real
-  | None -> assert false
+  let result =
+    Cmdliner.Term.eval_choice default [ create; update; reinstall ]
+  in
+  ( match result with
+  | `Ok op ->
+      Op.eval op Runner.real Github_client.real |> Rresult.R.failwith_error_msg
+  | `Version -> ()
+  | `Help -> ()
+  | `Error _ -> () );
+  Cmdliner.Term.exit result
