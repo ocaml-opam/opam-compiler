@@ -1,3 +1,6 @@
-type t = Create of Source.t | Update of Source.t | Reinstall
+val create :
+  Runner.t -> Github_client.t -> Source.t -> (unit, [> Rresult.R.msg ]) result
 
-val eval : t -> Runner.t -> Github_client.t -> (unit, [ `Msg of string ]) result
+val update : Runner.t -> Source.t -> (unit, [> Rresult.R.msg ]) result
+
+val reinstall : Runner.t -> (unit, [> Rresult.R.msg ]) result

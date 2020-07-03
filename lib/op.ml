@@ -1,5 +1,3 @@
-type t = Create of Source.t | Update of Source.t | Reinstall
-
 let create runner github_client source =
   let switch_name = Source.global_switch_name source in
   let description = Source.switch_description source in
@@ -20,9 +18,3 @@ let reinstall runner =
   let open Rresult.R in
   Opam.reinstall runner
   |> reword_error (fun `Unknown -> msgf "Could not reinstall")
-
-let eval op runner github_client =
-  match op with
-  | Create s -> create runner github_client s
-  | Update s -> update runner s
-  | Reinstall -> reinstall runner
