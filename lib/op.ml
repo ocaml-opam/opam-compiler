@@ -1,5 +1,9 @@
-let create runner github_client source =
-  let switch_name = Source.global_switch_name source in
+let create runner github_client source switch_name =
+  let switch_name =
+    match switch_name with
+    | Some s -> s
+    | None -> Source.global_switch_name source
+  in
   let description = Source.switch_description source in
   let open Rresult.R in
   Opam.create_from_scratch runner ~name:switch_name ~description

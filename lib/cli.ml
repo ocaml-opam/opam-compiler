@@ -1,9 +1,13 @@
 open! Import
 
-type t = Create of Source.t | Update of Source.t | Reinstall
+type t =
+  | Create of { source : Source.t; switch_name : Switch_name.t option }
+  | Update of Source.t
+  | Reinstall
 
 let eval runner github_client = function
-  | Create s -> Op.create runner github_client s
+  | Create { source; switch_name } ->
+      Op.create runner github_client source switch_name
   | Update s -> Op.update runner s
   | Reinstall -> Op.reinstall runner
 
@@ -11,21 +15,32 @@ let source =
   let open Cmdliner.Arg in
   required (pos 0 (some string) None (info []))
 
-let create s = Create (Source.parse s)
+let switch_name =
+  let open Cmdliner.Arg in
+  let conv = conv (Switch_name.parse, Switch_name.pp) in
+  value (opt (some conv) None (info [ "switch" ]))
 
-let update s = Update (Source.parse s)
+module Let_syntax = struct
+  open Cmdliner.Term
+
+  let ( let+ ) t f = const f $ t
+
+  let ( and+ ) a b = const (fun x y -> (x, y)) $ a $ b
+end
 
 let create =
-  let open Cmdliner.Term in
-  (const create $ source, info "create")
+  let open Let_syntax in
+  let+ source = source and+ switch_name = switch_name in
+  Create { source = Source.parse source; switch_name }
 
 let update =
-  let open Cmdliner.Term in
-  (const update $ source, info "update")
+  let open Let_syntax in
+  let+ source = source in
+  Update (Source.parse source)
 
 let reinstall =
   let open Cmdliner.Term in
-  (const Reinstall, info "reinstall")
+  const Reinstall
 
 let default =
   let open Cmdliner.Term in
@@ -33,7 +48,13 @@ let default =
 
 let main () =
   let result =
-    Cmdliner.Term.eval_choice default [ create; update; reinstall ]
+    let open Cmdliner.Term in
+    eval_choice default
+      [
+        (create, info "create");
+        (update, info "update");
+        (reinstall, info "reinstall");
+      ]
   in
   ( match result with
   | `Ok op ->
