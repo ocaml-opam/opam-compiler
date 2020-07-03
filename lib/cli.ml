@@ -2,13 +2,11 @@ open! Import
 
 type t =
   | Create of { source : Source.t; switch_name : Switch_name.t option }
-  | Update of Source.t
   | Reinstall
 
 let eval runner github_client = function
   | Create { source; switch_name } ->
       Op.create runner github_client source switch_name
-  | Update s -> Op.update runner s
   | Reinstall -> Op.reinstall runner
 
 let source =
@@ -33,11 +31,6 @@ let create =
   let+ source = source and+ switch_name = switch_name in
   Create { source = Source.parse source; switch_name }
 
-let update =
-  let open Let_syntax in
-  let+ source = source in
-  Update (Source.parse source)
-
 let reinstall =
   let open Cmdliner.Term in
   const Reinstall
@@ -50,11 +43,7 @@ let main () =
   let result =
     let open Cmdliner.Term in
     eval_choice default
-      [
-        (create, info "create");
-        (update, info "update");
-        (reinstall, info "reinstall");
-      ]
+      [ (create, info "create"); (reinstall, info "reinstall") ]
   in
   ( match result with
   | `Ok op ->

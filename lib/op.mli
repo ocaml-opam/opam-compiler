@@ -5,6 +5,4 @@ val create :
   Switch_name.t option ->
   (unit, [> Rresult.R.msg ]) result
 
-val update : Runner.t -> Source.t -> (unit, [> Rresult.R.msg ]) result
-
 val reinstall : Runner.t -> (unit, [> Rresult.R.msg ]) result

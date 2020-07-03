@@ -88,32 +88,6 @@ let create_tests =
       ~expected:(Error (`Msg "Cannot create switch"));
   ]
 
-let update_tests =
-  let test name source expectations ~expected =
-    Deferred.test_case
-      ( name,
-        `Quick,
-        fun d ->
-          let run_command =
-            Mock.create d (module Bos.Cmd) __LOC__ expectations
-          in
-          let runner = { Helpers.runner_fail_all with run_command } in
-          let got = Op.update runner source in
-          Alcotest.check Alcotest.(result unit msg) __LOC__ expected got )
-  in
-  [
-    test "update"
-      (Github_branch { Branch.user = "USER"; repo = "REPO"; branch = "BRANCH" })
-      [
-        Mock.expect
-          Bos.Cmd.(
-            v "opam" % "update" % "--switch" % "USER-REPO-BRANCH"
-            % "ocaml-variants")
-          ~and_return:(Ok 0);
-      ]
-      ~expected:(Ok ());
-  ]
-
 let reinstall_tests =
   let test name expectations ~expected =
     Deferred.test_case
@@ -141,9 +115,4 @@ let reinstall_tests =
       ~expected:(Ok ());
   ]
 
-let tests =
-  [
-    ("Op create", create_tests);
-    ("Op update", update_tests);
-    ("Op reinstall", reinstall_tests);
-  ]
+let tests = [ ("Op create", create_tests); ("Op reinstall", reinstall_tests) ]
