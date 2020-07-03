@@ -12,12 +12,6 @@ let create runner github_client source switch_name =
         Opam.pin_add runner ~name:switch_name url)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 
-let update runner source =
-  let open Rresult.R in
-  let switch_name = Source.global_switch_name source in
-  Opam.update runner ~name:switch_name
-  |> reword_error (fun `Unknown -> msgf "Cannot update switch")
-
 let reinstall runner =
   let open Rresult.R in
   Opam.reinstall runner
