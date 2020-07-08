@@ -58,16 +58,30 @@ let raw_switch_name source =
 let global_switch_name source =
   Switch_name.escape_string (raw_switch_name source)
 
-let switch_description source =
-  Format.asprintf "[opam-compiler] %s" (raw_switch_name source)
+let pp_extra_description ppf = function
+  | None -> ()
+  | Some s -> Format.fprintf ppf " - %s" s
+
+let extra_description source (client : Github_client.t) =
+  match source with
+  | Github_branch _ -> None
+  | Local_source_dir _ -> None
+  | Github_PR pr ->
+      let open Rresult.R in
+      to_option (client.pr_info pr >>| fun { title; _ } -> title)
+
+let switch_description source client =
+  Format.asprintf "[opam-compiler] %s%a" (raw_switch_name source)
+    pp_extra_description
+    (extra_description source client)
 
 let switch_target source github_client =
   match source with
   | Github_branch branch -> Ok (Branch.git_url branch)
   | Github_PR pr ->
       let open Rresult.R in
-      Github_client.pr_source_branch github_client pr >>| fun branch ->
-      Branch.git_url branch
+      Github_client.pr_info github_client pr >>| fun { source_branch; _ } ->
+      Branch.git_url source_branch
   | Local_source_dir path -> Ok path
 
 let equal (x : t) y = x = y

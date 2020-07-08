@@ -1,7 +1,7 @@
-type t = {
-  pr_source_branch : Pull_request.t -> (Branch.t, [ `Unknown ]) result;
-}
+type pr_info = { source_branch : Branch.t; title : string }
 
-val pr_source_branch : t -> Pull_request.t -> (Branch.t, [ `Unknown ]) result
+type t = { pr_info : Pull_request.t -> (pr_info, [ `Unknown ]) result }
+
+val pr_info : t -> Pull_request.t -> (pr_info, [ `Unknown ]) result
 
 val real : t
