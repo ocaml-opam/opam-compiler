@@ -66,5 +66,28 @@ let switch_target_tests =
       ~expected:(Ok "PATH");
   ]
 
+let switch_description_tests =
+  let test name source ~expected =
+    ( name,
+      `Quick,
+      fun () ->
+        let got = Source.switch_description source in
+        Alcotest.check Alcotest.(string) __LOC__ expected got )
+  in
+  [
+    test "Github branch"
+      (Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
+      ~expected:"[opam-compiler] USER/REPO:BRANCH";
+    test "Local source dir" (Local_source_dir "DIR")
+      ~expected:"[opam-compiler] DIR";
+    test "Github PR"
+      (Github_PR { user = "USER"; repo = "REPO"; number = 1234 })
+      ~expected:"[opam-compiler] USER/REPO#1234";
+  ]
+
 let tests =
-  [ ("Source parse", parse_tests); ("Source git_url", switch_target_tests) ]
+  [
+    ("Source parse", parse_tests);
+    ("Source git_url", switch_target_tests);
+    ("Source switch_description", switch_description_tests);
+  ]
