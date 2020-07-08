@@ -22,4 +22,7 @@
   github-unix
   lwt_ssl
   re
-  (alcotest :with-test)))
+  (alcotest
+   (and
+    (>= 1.0.0)
+    :with-test))))

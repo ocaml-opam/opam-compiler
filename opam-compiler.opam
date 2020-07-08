@@ -13,7 +13,7 @@ depends: [
   "github-unix"
   "lwt_ssl"
   "re"
-  "alcotest" {with-test}
+  "alcotest" {>= "1.0.0" & with-test}
 ]
 build: [
   ["dune" "subst"] {pinned}
