@@ -1,5 +1,5 @@
 NAME
-       opam-compiler-reinstall
+       opam-compiler-reinstall - Reinstall the compiler
 
 SYNOPSIS
        opam-compiler reinstall [OPTION]... 
