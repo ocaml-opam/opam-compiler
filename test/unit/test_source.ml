@@ -34,10 +34,10 @@ let switch_target_tests =
       ( name,
         `Quick,
         fun d ->
-          let pr_source_branch =
+          let pr_info =
             Mock.create d (module Pull_request) __LOC__ expectations
           in
-          let github_client = { Github_client.pr_source_branch } in
+          let github_client = { Github_client.pr_info } in
           let got = Source.switch_target source github_client in
           Alcotest.check Alcotest.(result string error) __LOC__ expected got )
   in
@@ -53,9 +53,13 @@ let switch_target_tests =
             ~and_return:
               (Ok
                  {
-                   Branch.user = "SRC_USER";
-                   repo = "SRC_REPO";
-                   branch = "SRC_BRANCH";
+                   Github_client.source_branch =
+                     {
+                       Branch.user = "SRC_USER";
+                       repo = "SRC_REPO";
+                       branch = "SRC_BRANCH";
+                     };
+                   title = "TITLE";
                  });
         ]
       ~expected:(Ok "git+https://github.com/SRC_USER/SRC_REPO#SRC_BRANCH");
@@ -66,5 +70,51 @@ let switch_target_tests =
       ~expected:(Ok "PATH");
   ]
 
+let switch_description_tests =
+  let test name source ~github_expectations ~expected =
+    Deferred.test_case
+      ( name,
+        `Quick,
+        fun d ->
+          let pr_info =
+            Mock.create d (module Pull_request) __LOC__ github_expectations
+          in
+          let github_client = { Github_client.pr_info } in
+          let got = Source.switch_description source github_client in
+          Alcotest.check Alcotest.(string) __LOC__ expected got )
+  in
+  let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
+  [
+    test "Github branch"
+      (Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
+      ~github_expectations:[] ~expected:"[opam-compiler] USER/REPO:BRANCH";
+    test "Local source dir" (Local_source_dir "DIR") ~github_expectations:[]
+      ~expected:"[opam-compiler] DIR";
+    test "Github PR (successful)" (Github_PR pr)
+      ~github_expectations:
+        [
+          Mock.expect pr
+            ~and_return:
+              (Ok
+                 {
+                   Github_client.title = "TITLE";
+                   source_branch =
+                     {
+                       user = "SRC_USER";
+                       repo = "SRC_REPO";
+                       branch = "SRC_BRANCH";
+                     };
+                 });
+        ]
+      ~expected:"[opam-compiler] USER/REPO#1234 - TITLE";
+    test "Github PR (error)" (Github_PR pr)
+      ~github_expectations:[ Mock.expect pr ~and_return:(Error `Unknown) ]
+      ~expected:"[opam-compiler] USER/REPO#1234";
+  ]
+
 let tests =
-  [ ("Source parse", parse_tests); ("Source git_url", switch_target_tests) ]
+  [
+    ("Source parse", parse_tests);
+    ("Source git_url", switch_target_tests);
+    ("Source switch_description", switch_description_tests);
+  ]

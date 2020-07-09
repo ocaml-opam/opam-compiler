@@ -1,7 +1,8 @@
 open Opam_compiler
 
 let github_client_fail_all =
-  { Github_client.pr_source_branch = (fun _ -> assert false) }
+  let pr_info _ = assert false in
+  { Github_client.pr_info }
 
 let runner_fail_all =
   let run_command _ = assert false in

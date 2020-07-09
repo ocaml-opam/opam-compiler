@@ -1,8 +1,8 @@
-type t = {
-  pr_source_branch : Pull_request.t -> (Branch.t, [ `Unknown ]) result;
-}
+type pr_info = { source_branch : Branch.t; title : string }
 
-let pr_source_branch t = t.pr_source_branch
+type t = { pr_info : Pull_request.t -> (pr_info, [ `Unknown ]) result }
+
+let pr_info t = t.pr_info
 
 module Real = struct
   let pull_source_user branch =
@@ -19,17 +19,18 @@ module Real = struct
     let open Github.Monad in
     Github.Pull.get ~user ~repo ~num:number () >|= Github.Response.value
 
-  let pr_source_branch pr =
+  let pr_info pr =
     let open Rresult.R in
     get_pr pr |> Github.Monad.run |> Lwt_result.catch |> Lwt_main.run
     |> reword_error (fun (_ : exn) -> `Unknown)
-    >>= fun { Github_t.pull_head; _ } ->
+    >>= fun { Github_t.pull_head; pull_title = title; _ } ->
     pull_source_user pull_head >>= fun user ->
     pull_source_repo pull_head >>| fun repo ->
     let branch = pull_head.branch_ref in
-    { Branch.user; repo; branch }
+    let source_branch = { Branch.user; repo; branch } in
+    { source_branch; title }
 end
 
 let real =
   let open Real in
-  { pr_source_branch }
+  { pr_info }
