@@ -12,7 +12,14 @@ let create runner github_client source switch_name =
         Opam.pin_add runner ~name:switch_name url)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 
-let reinstall runner =
+type reinstall_mode = Quick | Full
+
+let reinstall_packages_if_needed runner = function
+  | Quick -> Ok ()
+  | Full -> Opam.reinstall_packages runner
+
+let reinstall runner mode =
   let open Rresult.R in
-  Opam.reinstall runner
+  Opam.reinstall_compiler runner
+  >>= (fun () -> reinstall_packages_if_needed runner mode)
   |> reword_error (fun `Unknown -> msgf "Could not reinstall")

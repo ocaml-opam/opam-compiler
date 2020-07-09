@@ -2,12 +2,12 @@ open! Import
 
 type t =
   | Create of { source : Source.t; switch_name : Switch_name.t option }
-  | Reinstall
+  | Reinstall of { mode : Op.reinstall_mode }
 
 let eval runner github_client = function
   | Create { source; switch_name } ->
       Op.create runner github_client source switch_name
-  | Reinstall -> Op.reinstall runner
+  | Reinstall { mode } -> Op.reinstall runner mode
 
 module Let_syntax = struct
   open Cmdliner.Term
@@ -63,13 +63,39 @@ module Create = struct
 end
 
 module Reinstall = struct
+  let reinstall_mode =
+    let open Cmdliner.Arg in
+    value
+      (vflag Op.Full
+         [
+           ( Full,
+             info ~doc:"Perform a full reinstallation (default)." [ "full" ] );
+           ( Quick,
+             info ~doc:"Perform a quick reinstallation (unsafe)" [ "quick" ] );
+         ])
+
   let term =
-    let open Cmdliner.Term in
-    const Reinstall
+    let open Let_syntax in
+    let+ mode = reinstall_mode in
+    Reinstall { mode }
+
+  let man =
+    [
+      `P "Reinstall the compiler will propagate the changes done to its source.";
+      `P "There are two ways to reinstall:";
+      `I
+        ( "Full (default)",
+          "Reinstall the compiler and all the packages in the switch. This can \
+           be slow but is always safe." );
+      `I
+        ( "Quick (unsafe)",
+          "Only reinstall the compiler. This is fast, but will break the \
+           switch if the way it compiles is modified for example." );
+    ]
 
   let info =
     let open Cmdliner.Term in
-    info ~doc:"Reinstall the compiler" "reinstall"
+    info ~man ~doc:"Reinstall the compiler" "reinstall"
 
   let command = (term, info)
 end

@@ -29,7 +29,7 @@ let update runner ~name =
     (let open Bos.Cmd in
     opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
 
-let reinstall runner =
+let reinstall_compiler runner =
   let open Rresult.R in
   let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
   Runner.run_out runner prefix_cmd >>= fun prefix ->
@@ -38,6 +38,12 @@ let reinstall runner =
   let make_install = Bos.Cmd.(v "make" % "install") in
   Runner.run runner configure >>= fun () ->
   Runner.run runner make >>= fun () -> Runner.run runner make_install
+
+let reinstall_packages runner =
+  Runner.run runner
+    Bos.Cmd.(
+      v "opam" % "reinstall" % "--assume-built" % "--working-dir"
+      % "ocaml-variants")
 
 let create_from_scratch runner ~name ~description =
   match create runner ~name ~description with
