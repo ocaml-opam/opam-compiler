@@ -89,7 +89,7 @@ let create_tests =
   ]
 
 let reinstall_tests =
-  let test name expectations ~expected =
+  let test name mode expectations ~expected =
     Deferred.test_case
       ( name,
         `Quick,
@@ -99,11 +99,11 @@ let reinstall_tests =
           in
           let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
           let runner = { Runner.run_command; run_out } in
-          let got = Op.reinstall runner in
+          let got = Op.reinstall runner mode in
           Alcotest.check Alcotest.(result unit msg) __LOC__ expected got )
   in
   [
-    test "reinstall"
+    test "reinstall (quick)" Quick
       Bos.Cmd.
         [
           Mock.expect
@@ -111,6 +111,20 @@ let reinstall_tests =
             ~and_return:(Ok 0);
           Mock.expect (v "make") ~and_return:(Ok 0);
           Mock.expect (v "make" % "install") ~and_return:(Ok 0);
+        ]
+      ~expected:(Ok ());
+    test "reinstall (full)" Full
+      Bos.Cmd.
+        [
+          Mock.expect
+            (v "./configure" % "--prefix" % "$('opam' 'config' 'var' 'prefix')")
+            ~and_return:(Ok 0);
+          Mock.expect (v "make") ~and_return:(Ok 0);
+          Mock.expect (v "make" % "install") ~and_return:(Ok 0);
+          Mock.expect
+            ( v "opam" % "reinstall" % "--assume-built" % "--working-dir"
+            % "ocaml-variants" )
+            ~and_return:(Ok 0);
         ]
       ~expected:(Ok ());
   ]
