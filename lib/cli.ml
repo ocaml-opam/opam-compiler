@@ -9,14 +9,6 @@ let eval runner github_client = function
       Op.create runner github_client source switch_name
   | Reinstall { mode } -> Op.reinstall runner mode
 
-module Let_syntax = struct
-  open Cmdliner.Term
-
-  let ( let+ ) t f = const f $ t
-
-  let ( and+ ) a b = const (fun x y -> (x, y)) $ a $ b
-end
-
 module Create = struct
   let source =
     let open Cmdliner.Arg in
@@ -51,7 +43,7 @@ module Create = struct
     ]
 
   let term =
-    let open Let_syntax in
+    let open Let_syntax.Cmdliner in
     let+ source = source and+ switch_name = switch_name in
     Create { source = Source.parse source; switch_name }
 
@@ -75,7 +67,7 @@ module Reinstall = struct
          ])
 
   let term =
-    let open Let_syntax in
+    let open Let_syntax.Cmdliner in
     let+ mode = reinstall_mode in
     Reinstall { mode }
 
