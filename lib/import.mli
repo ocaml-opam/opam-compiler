@@ -7,4 +7,12 @@ module Let_syntax : sig
     val ( and+ ) :
       'a Cmdliner.Term.t -> 'b Cmdliner.Term.t -> ('a * 'b) Cmdliner.Term.t
   end
+
+  module Option : sig
+    val ( let+ ) : 'a option -> ('a -> 'b) -> 'b option
+
+    val ( and+ ) : 'a option -> 'b option -> ('a * 'b) option
+
+    val ( let* ) : 'a option -> ('a -> 'b option) -> 'b option
+  end
 end

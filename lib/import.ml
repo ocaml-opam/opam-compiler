@@ -9,4 +9,15 @@ module Let_syntax = struct
 
     let ( and+ ) a b = const (fun x y -> (x, y)) $ a $ b
   end
+
+  module Option = struct
+    let ( let+ ) x f = Option.map f x
+
+    let ( let* ) = Option.bind
+
+    let ( and+ ) xo yo =
+      let* x = xo in
+      let+ y = yo in
+      (x, y)
+  end
 end
