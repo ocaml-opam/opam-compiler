@@ -1,3 +1,5 @@
+open! Import
+
 type pr_info = { source_branch : Branch.t; title : string }
 
 type t = { pr_info : Pull_request.t -> (pr_info, [ `Unknown ]) result }
@@ -21,11 +23,13 @@ module Real = struct
 
   let pr_info pr =
     let open Rresult.R in
-    get_pr pr |> Github.Monad.run |> Lwt_result.catch |> Lwt_main.run
-    |> reword_error (fun (_ : exn) -> `Unknown)
-    >>= fun { Github_t.pull_head; pull_title = title; _ } ->
-    pull_source_user pull_head >>= fun user ->
-    pull_source_repo pull_head >>| fun repo ->
+    let open Let_syntax.Result in
+    let* { Github_t.pull_head; pull_title = title; _ } =
+      get_pr pr |> Github.Monad.run |> Lwt_result.catch |> Lwt_main.run
+      |> reword_error (fun (_ : exn) -> `Unknown)
+    in
+    let* user = pull_source_user pull_head in
+    let+ repo = pull_source_repo pull_head in
     let branch = pull_head.branch_ref in
     let source_branch = { Branch.user; repo; branch } in
     { source_branch; title }

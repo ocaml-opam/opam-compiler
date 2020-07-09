@@ -1,3 +1,5 @@
+open! Import
+
 let opam = Bos.Cmd.v "opam"
 
 let ocaml_variants = "ocaml-variants"
@@ -30,14 +32,15 @@ let update runner ~name =
     opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
 
 let reinstall_compiler runner =
-  let open Rresult.R in
+  let open Let_syntax.Result in
   let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
-  Runner.run_out runner prefix_cmd >>= fun prefix ->
+  let* prefix = Runner.run_out runner prefix_cmd in
   let configure = Bos.Cmd.(v "./configure" % "--prefix" % prefix) in
   let make = Bos.Cmd.(v "make") in
   let make_install = Bos.Cmd.(v "make" % "install") in
-  Runner.run runner configure >>= fun () ->
-  Runner.run runner make >>= fun () -> Runner.run runner make_install
+  let* () = Runner.run runner configure in
+  let* () = Runner.run runner make in
+  Runner.run runner make_install
 
 let reinstall_packages runner =
   Runner.run runner
@@ -49,8 +52,8 @@ let create_from_scratch runner ~name ~description =
   match create runner ~name ~description with
   | Ok () -> Ok ()
   | Error `Switch_exists ->
-      let open Rresult.R in
-      remove runner ~name >>= fun () ->
+      let open Let_syntax.Result in
+      let* () = remove runner ~name in
       create runner ~name ~description
       |> Rresult.R.reword_error (fun _ -> `Unknown)
   | Error `Unknown as e -> e

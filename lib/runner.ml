@@ -1,3 +1,5 @@
+open! Import
+
 type t = {
   run_command : Bos.Cmd.t -> (int, [ `Unknown ]) result;
   run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
@@ -24,5 +26,6 @@ let run_command t = t.run_command
 let run_out t = t.run_out
 
 let run t cmd =
-  let open Rresult.R in
-  t.run_command cmd >>= function 0 -> Ok () | _ -> Error `Unknown
+  let open Let_syntax.Result in
+  let* res = t.run_command cmd in
+  match res with 0 -> Ok () | _ -> Error `Unknown

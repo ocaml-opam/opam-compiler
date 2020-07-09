@@ -22,12 +22,12 @@ let parse_as_branch s =
            Re.eos;
          ])
   in
-  Re.exec_opt re_branch s
-  |> Option.map (fun g ->
-         let user = Re.Group.get g 1 in
-         let repo = re_group_get_opt g 2 |> Option.value ~default:"ocaml" in
-         let branch = Re.Group.get g 3 in
-         Github_branch { user; repo; branch })
+  let open Let_syntax.Option in
+  let+ g = Re.exec_opt re_branch s in
+  let user = Re.Group.get g 1 in
+  let repo = re_group_get_opt g 2 |> Option.value ~default:"ocaml" in
+  let branch = Re.Group.get g 3 in
+  Github_branch { user; repo; branch }
 
 let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
 
@@ -67,8 +67,9 @@ let extra_description source (client : Github_client.t) =
   | Github_branch _ -> None
   | Local_source_dir _ -> None
   | Github_PR pr ->
-      let open Rresult.R in
-      to_option (client.pr_info pr >>| fun { title; _ } -> title)
+      let open Let_syntax.Option in
+      let+ { title; _ } = Result.to_option (client.pr_info pr) in
+      title
 
 let switch_description source client =
   Format.asprintf "[opam-compiler] %s%a" (raw_switch_name source)
@@ -79,8 +80,8 @@ let switch_target source github_client =
   match source with
   | Github_branch branch -> Ok (Branch.git_url branch)
   | Github_PR pr ->
-      let open Rresult.R in
-      Github_client.pr_info github_client pr >>| fun { source_branch; _ } ->
+      let open Let_syntax.Result in
+      let+ { source_branch; _ } = Github_client.pr_info github_client pr in
       Branch.git_url source_branch
   | Local_source_dir path -> Ok path
 
