@@ -20,4 +20,10 @@ module Let_syntax = struct
       let+ y = yo in
       (x, y)
   end
+
+  module Result = struct
+    let ( let+ ) x f = Result.map f x
+
+    let ( let* ) = Result.bind
+  end
 end

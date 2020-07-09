@@ -15,4 +15,10 @@ module Let_syntax : sig
 
     val ( let* ) : 'a option -> ('a -> 'b option) -> 'b option
   end
+
+  module Result : sig
+    val ( let+ ) : ('a, 'e) result -> ('a -> 'b) -> ('b, 'e) result
+
+    val ( let* ) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result
+  end
 end

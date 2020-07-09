@@ -1,3 +1,5 @@
+open! Import
+
 let create runner github_client source switch_name =
   let switch_name =
     match switch_name with
@@ -6,10 +8,10 @@ let create runner github_client source switch_name =
   in
   let description = Source.switch_description source github_client in
   let open Rresult.R in
-  Opam.create_from_scratch runner ~name:switch_name ~description
-  >>= (fun () ->
-        Source.switch_target source github_client >>= fun url ->
-        Opam.pin_add runner ~name:switch_name url)
+  let open Let_syntax.Result in
+  (let* () = Opam.create_from_scratch runner ~name:switch_name ~description in
+   let* url = Source.switch_target source github_client in
+   Opam.pin_add runner ~name:switch_name url)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 
 type reinstall_mode = Quick | Full
@@ -20,6 +22,7 @@ let reinstall_packages_if_needed runner = function
 
 let reinstall runner mode =
   let open Rresult.R in
-  Opam.reinstall_compiler runner
-  >>= (fun () -> reinstall_packages_if_needed runner mode)
+  let open Let_syntax.Result in
+  (let* () = Opam.reinstall_compiler runner in
+   reinstall_packages_if_needed runner mode)
   |> reword_error (fun `Unknown -> msgf "Could not reinstall")
