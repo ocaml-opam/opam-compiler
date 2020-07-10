@@ -5,6 +5,6 @@ let github_client_fail_all =
   { Github_client.pr_info }
 
 let runner_fail_all =
-  let run_command _ = assert false in
+  let run_command ?extra_env:_ _ = assert false in
   let run_out _ = assert false in
   { Runner.run_command; run_out }

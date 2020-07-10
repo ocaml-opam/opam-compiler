@@ -1,13 +1,29 @@
 open! Import
 
 type t =
-  | Create of { source : Source.t; switch_name : Switch_name.t option }
-  | Reinstall of { mode : Op.reinstall_mode }
+  | Create of {
+      source : Source.t;
+      switch_name : Switch_name.t option;
+      configure_command : Bos.Cmd.t option;
+    }
+  | Reinstall of {
+      mode : Op.reinstall_mode;
+      configure_command : Bos.Cmd.t option;
+    }
 
 let eval runner github_client = function
-  | Create { source; switch_name } ->
-      Op.create runner github_client source switch_name
-  | Reinstall { mode } -> Op.reinstall runner mode
+  | Create { source; switch_name; configure_command } ->
+      Op.create runner github_client source switch_name ~configure_command
+  | Reinstall { mode; configure_command } ->
+      Op.reinstall runner mode ~configure_command
+
+let configure_command =
+  let open Cmdliner.Arg in
+  let conv = conv (Bos.Cmd.of_string, Bos.Cmd.pp) in
+  value
+    (opt (some conv) None
+       (info ~doc:"Use this instead of \"./configure\"." ~docv:"COMMAND"
+          [ "configure-command" ]))
 
 module Create = struct
   let source =
@@ -44,8 +60,10 @@ module Create = struct
 
   let term =
     let open Let_syntax.Cmdliner in
-    let+ source = source and+ switch_name = switch_name in
-    Create { source = Source.parse source; switch_name }
+    let+ source = source
+    and+ switch_name = switch_name
+    and+ configure_command = configure_command in
+    Create { source = Source.parse source; switch_name; configure_command }
 
   let info =
     Cmdliner.Term.info ~man ~doc:"Create a switch from a compiler source"
@@ -68,8 +86,8 @@ module Reinstall = struct
 
   let term =
     let open Let_syntax.Cmdliner in
-    let+ mode = reinstall_mode in
-    Reinstall { mode }
+    let+ mode = reinstall_mode and+ configure_command = configure_command in
+    Reinstall { mode; configure_command }
 
   let man =
     [
