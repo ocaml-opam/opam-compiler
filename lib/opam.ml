@@ -20,11 +20,28 @@ let remove runner ~name =
     (let open Bos.Cmd in
     opam % "switch" % "remove" % Switch_name.to_string name % "--yes")
 
-let pin_add runner ~name url =
-  Runner.run runner
+let pin_add runner ~name url ~configure_command =
+  let cmd =
     Bos.Cmd.(
       opam % "pin" % "add" % "--switch" % Switch_name.to_string name % "--yes"
       % ocaml_variants % url)
+  in
+  let cmd, extra_env =
+    match configure_command with
+    | None -> (cmd, None)
+    | Some configure_command ->
+        let opam_quote s = Printf.sprintf {|"%s"|} s in
+        let configure_in_opam_format =
+          configure_command |> Bos.Cmd.to_list |> List.map opam_quote
+          |> String.concat " "
+        in
+        let sed_command =
+          Printf.sprintf {|sed -i -e 's#"./configure"#%s#g'|}
+            configure_in_opam_format
+        in
+        (Bos.Cmd.(cmd % "--edit"), Some [ ("OPAMEDITOR", sed_command) ])
+  in
+  Runner.run ?extra_env runner cmd
 
 let update runner ~name =
   Runner.run runner

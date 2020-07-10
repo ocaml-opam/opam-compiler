@@ -26,6 +26,9 @@ ARGUMENTS
            Where to fetch the compiler.
 
 OPTIONS
+       --configure-command=COMMAND
+           Use this instead of "./configure".
+
        --help[=FMT] (default=auto)
            Show this help in format FMT. The value FMT must be one of `auto',
            `pager', `groff' or `plain'. With `auto', the format is `pager` or
