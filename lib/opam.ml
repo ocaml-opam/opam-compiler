@@ -18,7 +18,7 @@ let create runner ~name ~description =
 let remove runner ~name =
   Runner.run runner
     (let open Bos.Cmd in
-    opam % "switch" % "remove" % Switch_name.to_string name)
+    opam % "switch" % "remove" % Switch_name.to_string name % "--yes")
 
 let pin_add runner ~name url =
   Runner.run runner

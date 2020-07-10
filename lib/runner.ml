@@ -7,9 +7,11 @@ type t = {
 
 module Real = struct
   let run_command cmd =
-    match Bos.OS.Cmd.run_status cmd with
-    | Ok (`Exited n) -> Ok n
-    | Ok (`Signaled _) -> Error `Unknown
+    match
+      Bos.OS.Cmd.in_null |> Bos.OS.Cmd.run_io cmd |> Bos.OS.Cmd.out_stdout
+    with
+    | Ok ((), (_, `Exited n)) -> Ok n
+    | Ok ((), (_, `Signaled _)) -> Error `Unknown
     | Error _ -> Error `Unknown
 
   let run_out cmd =

@@ -26,7 +26,7 @@ let create_tests =
       % "--description" % "[opam-compiler] USER/REPO:BRANCH")
   in
   let remove_call =
-    Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH")
+    Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH" % "--yes")
   in
   let pin_add_call =
     Bos.Cmd.(
