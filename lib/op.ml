@@ -20,9 +20,9 @@ let reinstall_packages_if_needed runner = function
   | Quick -> Ok ()
   | Full -> Opam.reinstall_packages runner
 
-let reinstall runner mode =
+let reinstall runner mode ~configure_command =
   let open Rresult.R in
   let open Let_syntax.Result in
-  (let* () = Opam.reinstall_compiler runner in
+  (let* () = Opam.reinstall_compiler runner ~configure_command in
    reinstall_packages_if_needed runner mode)
   |> reword_error (fun `Unknown -> msgf "Could not reinstall")

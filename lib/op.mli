@@ -8,4 +8,8 @@ val create :
 
 type reinstall_mode = Quick | Full
 
-val reinstall : Runner.t -> reinstall_mode -> (unit, [> Rresult.R.msg ]) result
+val reinstall :
+  Runner.t ->
+  reinstall_mode ->
+  configure_command:Bos.Cmd.t option ->
+  (unit, [> Rresult.R.msg ]) result

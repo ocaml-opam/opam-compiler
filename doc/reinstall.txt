@@ -16,6 +16,9 @@ SYNOPSIS
            Only reinstall the compiler. This is fast, but will break the
            switch if the way it compiles is modified for example.
 OPTIONS
+       --configure-command=COMMAND
+           Use this instead of "./configure".
+
        --full
            Perform a full reinstallation (default).
 

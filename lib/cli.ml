@@ -6,12 +6,24 @@ type t =
       switch_name : Switch_name.t option;
       configure_command : Bos.Cmd.t option;
     }
-  | Reinstall of { mode : Op.reinstall_mode }
+  | Reinstall of {
+      mode : Op.reinstall_mode;
+      configure_command : Bos.Cmd.t option;
+    }
 
 let eval runner github_client = function
   | Create { source; switch_name; configure_command } ->
       Op.create runner github_client source switch_name ~configure_command
-  | Reinstall { mode } -> Op.reinstall runner mode
+  | Reinstall { mode; configure_command } ->
+      Op.reinstall runner mode ~configure_command
+
+let configure_command =
+  let open Cmdliner.Arg in
+  let conv = conv (Bos.Cmd.of_string, Bos.Cmd.pp) in
+  value
+    (opt (some conv) None
+       (info ~doc:"Use this instead of \"./configure\"." ~docv:"COMMAND"
+          [ "configure-command" ]))
 
 module Create = struct
   let source =
@@ -30,14 +42,6 @@ module Create = struct
               "Use this name for the switch. If omitted, a name is inferred \
                from the source."
             [ "switch" ]))
-
-  let configure_command =
-    let open Cmdliner.Arg in
-    let conv = conv (Bos.Cmd.of_string, Bos.Cmd.pp) in
-    value
-      (opt (some conv) None
-         (info ~doc:"Use this instead of \"./configure\"." ~docv:"COMMAND"
-            [ "configure-command" ]))
 
   let man =
     [
@@ -82,8 +86,8 @@ module Reinstall = struct
 
   let term =
     let open Let_syntax.Cmdliner in
-    let+ mode = reinstall_mode in
-    Reinstall { mode }
+    let+ mode = reinstall_mode and+ configure_command = configure_command in
+    Reinstall { mode; configure_command }
 
   let man =
     [
