@@ -1,5 +1,5 @@
 (test
  (name test)
  (action
-  (run %{test} --compact --color=always))
+  (run %{test} --compact))
  (libraries alcotest opam_compiler))

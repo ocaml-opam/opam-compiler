@@ -26,5 +26,5 @@
   re
   (alcotest
    (and
-    (>= 1.0.0)
+    (>= 1.2.0)
     :with-test))))
