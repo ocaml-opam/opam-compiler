@@ -4,8 +4,8 @@ synopsis: "Plugin to create switches using custom compilers"
 maintainer: ["Etienne Millon <me@emillon.org>"]
 authors: ["Etienne Millon <me@emillon.org>"]
 tags: ["flags:plugin"]
-homepage: "https://github.com/emillon/opam-compiler"
-bug-reports: "https://github.com/emillon/opam-compiler/issues"
+homepage: "https://github.com/ocaml-opam/opam-compiler"
+bug-reports: "https://github.com/ocaml-opam/opam-compiler/issues"
 depends: [
   "dune" {>= "2.5"}
   "ocaml" {>= "4.08.0"}
@@ -30,4 +30,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/emillon/opam-compiler.git"
+dev-repo: "git+https://github.com/ocaml-opam/opam-compiler.git"

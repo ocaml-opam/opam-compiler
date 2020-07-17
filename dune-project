@@ -5,7 +5,7 @@
 (generate_opam_files true)
 
 (source
- (github emillon/opam-compiler))
+ (github ocaml-opam/opam-compiler))
 
 (authors "Etienne Millon <me@emillon.org>")
 
@@ -13,8 +13,7 @@
 
 (package
  (name opam-compiler)
- (synopsis
-   "Plugin to create switches using custom compilers")
+ (synopsis "Plugin to create switches using custom compilers")
  (tags (flags:plugin))
  (depends
   (ocaml
