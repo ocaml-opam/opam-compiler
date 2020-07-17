@@ -1,20 +1,16 @@
 type t = {
-  run_command :
-    ?extra_env:(string * string) list -> Bos.Cmd.t -> (int, [ `Unknown ]) result;
+  run :
+    ?extra_env:(string * string) list ->
+    Bos.Cmd.t ->
+    (unit, [ `Unknown ]) result;
   run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
 }
 
 val real : t
 
-val run_command :
-  t ->
-  ?extra_env:(string * string) list ->
-  Bos.Cmd.t ->
-  (int, [ `Unknown ]) result
-
 val run :
-  ?extra_env:(string * string) list ->
   t ->
+  ?extra_env:(string * string) list ->
   Bos.Cmd.t ->
   (unit, [ `Unknown ]) result
 

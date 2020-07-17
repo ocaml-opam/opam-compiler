@@ -10,15 +10,7 @@ let create runner ~name ~description =
     opam % "switch" % "create" % Switch_name.to_string name % "--empty"
     % "--description" % description
   in
-  match Runner.run_command runner create_cmd with
-  | Ok 0 -> Ok ()
-  | Ok 2 -> Error `Switch_exists
-  | _ -> Error `Unknown
-
-let remove runner ~name =
-  Runner.run runner
-    (let open Bos.Cmd in
-    opam % "switch" % "remove" % Switch_name.to_string name % "--yes")
+  Runner.run runner create_cmd
 
 let pin_add runner ~name url ~configure_command =
   let cmd =
@@ -71,13 +63,3 @@ let reinstall_packages runner =
     Bos.Cmd.(
       v "opam" % "reinstall" % "--assume-built" % "--working-dir"
       % "ocaml-variants")
-
-let create_from_scratch runner ~name ~description =
-  match create runner ~name ~description with
-  | Ok () -> Ok ()
-  | Error `Switch_exists ->
-      let open Let_syntax.Result in
-      let* () = remove runner ~name in
-      create runner ~name ~description
-      |> Rresult.R.reword_error (fun _ -> `Unknown)
-  | Error `Unknown as e -> e

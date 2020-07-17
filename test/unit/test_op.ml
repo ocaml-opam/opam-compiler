@@ -2,13 +2,13 @@ open Opam_compiler
 
 let msg = Alcotest.testable Rresult.R.pp_msg ( = )
 
-let run_command_mock d expectations =
+let run_mock d expectations =
   let testable =
     Alcotest.(pair (module Bos.Cmd) (option (list (pair string string))))
   in
-  let run_command_mock = Mock.create d testable __LOC__ expectations in
-  let run_command ?extra_env cmd = run_command_mock (cmd, extra_env) in
-  run_command
+  let run_mock = Mock.create d testable __LOC__ expectations in
+  let run ?extra_env cmd = run_mock (cmd, extra_env) in
+  run
 
 let create_tests =
   let test name ?switch_name ?configure_command expectations ~expected =
@@ -16,8 +16,8 @@ let create_tests =
       ( name,
         `Quick,
         fun d ->
-          let run_command = run_command_mock d expectations in
-          let runner = { Helpers.runner_fail_all with run_command } in
+          let run = run_mock d expectations in
+          let runner = { Helpers.runner_fail_all with run } in
           let github_client = Helpers.github_client_fail_all in
           let source =
             Source.Github_branch
@@ -34,10 +34,6 @@ let create_tests =
         % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
       None )
   in
-  let remove_call =
-    ( Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH" % "--yes"),
-      None )
-  in
   let pin_add_cmd =
     Bos.Cmd.(
       v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
@@ -47,8 +43,8 @@ let create_tests =
   [
     test "create: everything ok, default switch"
       [
-        Mock.expect create_call ~and_return:(Ok 0);
-        Mock.expect pin_add_call ~and_return:(Ok 0);
+        Mock.expect create_call ~and_return:(Ok ());
+        Mock.expect pin_add_call ~and_return:(Ok ());
       ]
       ~expected:(Ok ());
     test "create: everything ok, explicit switch"
@@ -59,50 +55,22 @@ let create_tests =
               v "opam" % "switch" % "create" % "SWITCH-NAME" % "--empty"
               % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
             None )
-          ~and_return:(Ok 0);
+          ~and_return:(Ok ());
         Mock.expect
           ( Bos.Cmd.(
               v "opam" % "pin" % "add" % "--switch" % "SWITCH-NAME" % "--yes"
               % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH"),
             None )
-          ~and_return:(Ok 0);
+          ~and_return:(Ok ());
       ]
       ~expected:(Ok ());
     test "create: first create fails"
       [ Mock.expect create_call ~and_return:(Error `Unknown) ]
       ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: switch exists, rest ok"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Ok 0);
-        Mock.expect create_call ~and_return:(Ok 0);
-        Mock.expect pin_add_call ~and_return:(Ok 0);
-      ]
-      ~expected:(Ok ());
-    test "create: switch exists, remove fails"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Error `Unknown);
-      ]
-      ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: switch exists, remove ok, create fails"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Ok 0);
-        Mock.expect create_call ~and_return:(Error `Unknown);
-      ]
-      ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: switch exists, remove ok, switch still exists"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Ok 0);
-        Mock.expect create_call ~and_return:(Ok 2);
-      ]
-      ~expected:(Error (`Msg "Cannot create switch"));
     test "create: explicit configure"
       ~configure_command:Bos.Cmd.(v "./configure" % "--enable-x")
       [
-        Mock.expect create_call ~and_return:(Ok 0);
+        Mock.expect create_call ~and_return:(Ok ());
         Mock.expect
           ( Bos.Cmd.(pin_add_cmd % "--edit"),
             Some
@@ -111,7 +79,7 @@ let create_tests =
                   {|sed -i -e 's#"./configure"#"./configure" "--enable-x"#g'|}
                 );
               ] )
-          ~and_return:(Ok 0);
+          ~and_return:(Ok ());
       ]
       ~expected:(Ok ());
   ]
@@ -122,9 +90,9 @@ let reinstall_tests =
       ( name,
         `Quick,
         fun d ->
-          let run_command = run_command_mock d expectations in
+          let run = run_mock d expectations in
           let run_out cmd = Ok ("$(" ^ Bos.Cmd.to_string cmd ^ ")") in
-          let runner = { Runner.run_command; run_out } in
+          let runner = { Runner.run; run_out } in
           let got = Op.reinstall runner mode ~configure_command in
           Alcotest.check Alcotest.(result unit msg) __LOC__ expected got )
   in
@@ -135,9 +103,9 @@ let reinstall_tests =
           Mock.expect
             ( v "./configure" % "--prefix" % "$('opam' 'config' 'var' 'prefix')",
               None )
-            ~and_return:(Ok 0);
-          Mock.expect (v "make", None) ~and_return:(Ok 0);
-          Mock.expect (v "make" % "install", None) ~and_return:(Ok 0);
+            ~and_return:(Ok ());
+          Mock.expect (v "make", None) ~and_return:(Ok ());
+          Mock.expect (v "make" % "install", None) ~and_return:(Ok ());
         ]
       ~expected:(Ok ());
     test "reinstall (full)" Full None
@@ -146,14 +114,14 @@ let reinstall_tests =
           Mock.expect
             ( v "./configure" % "--prefix" % "$('opam' 'config' 'var' 'prefix')",
               None )
-            ~and_return:(Ok 0);
-          Mock.expect (v "make", None) ~and_return:(Ok 0);
-          Mock.expect (v "make" % "install", None) ~and_return:(Ok 0);
+            ~and_return:(Ok ());
+          Mock.expect (v "make", None) ~and_return:(Ok ());
+          Mock.expect (v "make" % "install", None) ~and_return:(Ok ());
           Mock.expect
             ( v "opam" % "reinstall" % "--assume-built" % "--working-dir"
               % "ocaml-variants",
               None )
-            ~and_return:(Ok 0);
+            ~and_return:(Ok ());
         ]
       ~expected:(Ok ());
     test "reinstall (different configure command)" Quick
@@ -164,9 +132,9 @@ let reinstall_tests =
             ( v "./configure" % "--enable-something" % "--prefix"
               % "$('opam' 'config' 'var' 'prefix')",
               None )
-            ~and_return:(Ok 0);
-          Mock.expect (v "make", None) ~and_return:(Ok 0);
-          Mock.expect (v "make" % "install", None) ~and_return:(Ok 0);
+            ~and_return:(Ok ());
+          Mock.expect (v "make", None) ~and_return:(Ok ());
+          Mock.expect (v "make" % "install", None) ~and_return:(Ok ());
         ]
       ~expected:(Ok ());
   ]
