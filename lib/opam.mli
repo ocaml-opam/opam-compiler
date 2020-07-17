@@ -1,4 +1,4 @@
-val create_from_scratch :
+val create :
   Runner.t ->
   name:Switch_name.t ->
   description:string ->

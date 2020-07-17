@@ -34,10 +34,6 @@ let create_tests =
         % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
       None )
   in
-  let remove_call =
-    ( Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH" % "--yes"),
-      None )
-  in
   let pin_add_cmd =
     Bos.Cmd.(
       v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
@@ -70,34 +66,6 @@ let create_tests =
       ~expected:(Ok ());
     test "create: first create fails"
       [ Mock.expect create_call ~and_return:(Error `Unknown) ]
-      ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: switch exists, rest ok"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Ok 0);
-        Mock.expect create_call ~and_return:(Ok 0);
-        Mock.expect pin_add_call ~and_return:(Ok 0);
-      ]
-      ~expected:(Ok ());
-    test "create: switch exists, remove fails"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Error `Unknown);
-      ]
-      ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: switch exists, remove ok, create fails"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Ok 0);
-        Mock.expect create_call ~and_return:(Error `Unknown);
-      ]
-      ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: switch exists, remove ok, switch still exists"
-      [
-        Mock.expect create_call ~and_return:(Ok 2);
-        Mock.expect remove_call ~and_return:(Ok 0);
-        Mock.expect create_call ~and_return:(Ok 2);
-      ]
       ~expected:(Error (`Msg "Cannot create switch"));
     test "create: explicit configure"
       ~configure_command:Bos.Cmd.(v "./configure" % "--enable-x")

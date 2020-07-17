@@ -6,12 +6,6 @@ type t = {
 
 val real : t
 
-val run_command :
-  t ->
-  ?extra_env:(string * string) list ->
-  Bos.Cmd.t ->
-  (int, [ `Unknown ]) result
-
 val run :
   ?extra_env:(string * string) list ->
   t ->

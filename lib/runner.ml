@@ -36,8 +36,6 @@ let real =
   let open Real in
   { run_command; run_out }
 
-let run_command t = t.run_command
-
 let run_out t = t.run_out
 
 let run ?extra_env t cmd =
