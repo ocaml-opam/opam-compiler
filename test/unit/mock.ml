@@ -22,7 +22,6 @@ let check_empty t =
   let remaining = List.map fst t.expectations in
   Alcotest.check (Alcotest.list t.testable) t.loc [] remaining
 
-let create deferred testable loc expectations =
+let create testable loc expectations =
   let t = { testable; loc; expectations } in
-  Deferred.run deferred (fun () -> check_empty t);
-  call t
+  (call t, fun () -> check_empty t)

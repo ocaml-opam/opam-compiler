@@ -1,4 +1,5 @@
 open Opam_compiler
+open Helpers
 
 let error =
   let pp_error ppf = function `Unknown -> Format.fprintf ppf "Unknown" in
@@ -30,16 +31,13 @@ let parse_tests =
 
 let switch_target_tests =
   let test name source ~expectations ~expected =
-    Deferred.test_case
-      ( name,
-        `Quick,
-        fun d ->
-          let pr_info =
-            Mock.create d (module Pull_request) __LOC__ expectations
-          in
-          let github_client = { Github_client.pr_info } in
-          let got = Source.switch_target source github_client in
-          Alcotest.check Alcotest.(result string error) __LOC__ expected got )
+    ( name,
+      `Quick,
+      fun () ->
+        let$ pr_info = Mock.create (module Pull_request) __LOC__ expectations in
+        let github_client = { Github_client.pr_info } in
+        let got = Source.switch_target source github_client in
+        Alcotest.check Alcotest.(result string error) __LOC__ expected got )
   in
   let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
   [
@@ -72,16 +70,15 @@ let switch_target_tests =
 
 let switch_description_tests =
   let test name source ~github_expectations ~expected =
-    Deferred.test_case
-      ( name,
-        `Quick,
-        fun d ->
-          let pr_info =
-            Mock.create d (module Pull_request) __LOC__ github_expectations
-          in
-          let github_client = { Github_client.pr_info } in
-          let got = Source.switch_description source github_client in
-          Alcotest.check Alcotest.(string) __LOC__ expected got )
+    ( name,
+      `Quick,
+      fun () ->
+        let$ pr_info =
+          Mock.create (module Pull_request) __LOC__ github_expectations
+        in
+        let github_client = { Github_client.pr_info } in
+        let got = Source.switch_description source github_client in
+        Alcotest.check Alcotest.(string) __LOC__ expected got )
   in
   let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
   [
