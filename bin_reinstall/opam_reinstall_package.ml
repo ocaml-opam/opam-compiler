@@ -10,20 +10,14 @@ let install_job ~install_cmd () =
   let cmd, args = install_cmd in
   OpamProcess.command cmd args @@> fun _result -> Done ()
 
-let track (t : _ OpamStateTypes.switch_state) job =
+let track ~root ~switch job =
   let open OpamProcess.Job.Op in
-  let switch_prefix = OpamPath.Switch.root t.switch_global.root t.switch in
+  let switch_prefix = OpamPath.Switch.root root switch in
   OpamDirTrack.track switch_prefix job @@| fun ((), changes) -> changes
 
-let with_state ~switch f =
-  OpamGlobalState.with_ `Lock_read (fun global_state ->
-      OpamSwitchState.with_ `Lock_read global_state ~switch f)
-
-let main (t : _ OpamStateTypes.switch_state) ~package_name ~install_cmd =
-  let changes_f =
-    OpamPath.Switch.changes t.switch_global.root t.switch package_name
-  in
-  let switch_root = OpamPath.Switch.root t.switch_global.root t.switch in
+let main { OpamStateTypes.root; _ } ~switch ~package_name ~install_cmd =
+  let changes_f = OpamPath.Switch.changes root switch package_name in
+  let switch_root = OpamPath.Switch.root root switch in
   let installed_files =
     match OpamFile.Changes.read_opt changes_f with
     | None -> []
@@ -36,7 +30,7 @@ let main (t : _ OpamStateTypes.switch_state) ~package_name ~install_cmd =
     OpamProcess.Job.run
       (let open OpamProcess.Job.Op in
       remove_files installed_files @@+ fun () ->
-      track t (install_job ~install_cmd))
+      track ~root ~switch (install_job ~install_cmd))
   in
   print_endline (OpamDirTrack.to_string changes);
   OpamFile.Changes.write changes_f changes
@@ -47,5 +41,5 @@ let () =
       let package_name = OpamPackage.Name.of_string package_name in
       let switch = OpamSwitch.of_string switch_name in
       let install_cmd = (install_cmd, install_cmd_args) in
-      with_state ~switch (main ~package_name ~install_cmd)
+      OpamGlobalState.with_ `Lock_read (main ~switch ~package_name ~install_cmd)
   | _ -> assert false
