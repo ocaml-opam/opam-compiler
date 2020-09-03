@@ -41,5 +41,5 @@ let () =
       let package_name = OpamPackage.Name.of_string package_name in
       let switch = OpamSwitch.of_string switch_name in
       let install_cmd = (install_cmd, install_cmd_args) in
-      OpamGlobalState.with_ `Lock_read (main ~switch ~package_name ~install_cmd)
+      OpamGlobalState.with_ `Lock_none (main ~switch ~package_name ~install_cmd)
   | _ -> assert false
