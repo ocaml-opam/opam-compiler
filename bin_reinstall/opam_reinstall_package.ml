@@ -15,25 +15,41 @@ let track ~root ~switch job =
   let switch_prefix = OpamPath.Switch.root root switch in
   OpamDirTrack.track switch_prefix job @@| fun ((), changes) -> changes
 
+let all =
+  List.fold_left
+    (fun acc xo ->
+      match (acc, xo) with
+      | None, _ -> None
+      | Some _, None -> None
+      | Some xs, Some x -> Some (x :: xs))
+    (Some [])
+
+let installed_files switch_root changes_file =
+  match OpamFile.Changes.read_opt changes_file with
+  | None -> None
+  | Some c ->
+      OpamDirTrack.check switch_root c
+      |> List.map (function
+           | file, `Unchanged -> Some (OpamFilename.to_string file)
+           | _, `Changed -> None
+           | _, `Removed -> None)
+      |> all
+
 let main { OpamStateTypes.root; _ } ~switch ~package_name ~install_cmd =
-  let changes_f = OpamPath.Switch.changes root switch package_name in
+  let changes_file = OpamPath.Switch.changes root switch package_name in
   let switch_root = OpamPath.Switch.root root switch in
   let installed_files =
-    match OpamFile.Changes.read_opt changes_f with
-    | None -> []
-    | Some c ->
-        OpamDirTrack.check switch_root c
-        |> List.map (fun (file, _status) -> OpamFilename.to_string file)
+    match installed_files switch_root changes_file with
+    | Some l -> l
+    | None -> failwith "Cannot get installed files"
   in
-  Printf.printf "Removing %d files\n" (List.length installed_files);
   let changes =
     OpamProcess.Job.run
       (let open OpamProcess.Job.Op in
       remove_files installed_files @@+ fun () ->
       track ~root ~switch (install_job ~install_cmd))
   in
-  print_endline (OpamDirTrack.to_string changes);
-  OpamFile.Changes.write changes_f changes
+  OpamFile.Changes.write changes_file changes
 
 let () =
   match Array.to_list Sys.argv with
