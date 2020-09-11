@@ -3,6 +3,7 @@ opam-version: "2.0"
 synopsis: "Plugin to create switches using custom compilers"
 maintainer: ["Etienne Millon <me@emillon.org>"]
 authors: ["Etienne Millon <me@emillon.org>"]
+license: "ISC"
 tags: ["flags:plugin"]
 homepage: "https://github.com/ocaml-opam/opam-compiler"
 bug-reports: "https://github.com/ocaml-opam/opam-compiler/issues"

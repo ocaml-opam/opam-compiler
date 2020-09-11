@@ -7,6 +7,8 @@
 (source
  (github ocaml-opam/opam-compiler))
 
+(license ISC)
+
 (authors "Etienne Millon <me@emillon.org>")
 
 (maintainers "Etienne Millon <me@emillon.org>")
