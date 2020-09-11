@@ -48,27 +48,3 @@ which will create a vanilla compiler. It is possible to override this:
 
     # Just build the bytecode compiler from a pull request
     opam compiler create '#1234' --configure-command "./configure --disable-native-compiler"
-
-It is also possible to create a switch from a local directory.
-
-> :construction: This is a WIP feature, it will mostly work when using "." as
-> source name, and other commands only work well when invoked from the same
-> directory.
-
-    # Use this source tree
-    opam compiler create . --switch-name fast-exceptions
-
-Propagating changes
--------------------
-
-> :construction: This is a WIP feature. It works only with local directories (so
-> above caveats apply), will always reconfigure, and the `opam reinstall`
-> command gets stuck sometimes.
-
-When using a local directory as a source, it is possible to propagate the
-changes to the switch. As described [here](doc/reinstall.txt), it supports two
-strategies:
-
-- a full and safe one (by default) that will reinstall all packages in the
-  switch.
-- a quick and unsafe one that will only reinstall the compiler in place.

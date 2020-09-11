@@ -12,21 +12,22 @@ let parse_tests =
       `Quick,
       fun () ->
         let got = Source.parse s in
-        Alcotest.check (module Source) __LOC__ expected got )
+        Alcotest.(check (result (module Source) error) __LOC__ expected got) )
   in
   [
     test "full branch syntax" "user/repo:branch"
-      (Github_branch { user = "user"; repo = "repo"; branch = "branch" });
+      (Ok (Github_branch { user = "user"; repo = "repo"; branch = "branch" }));
     test "branches can have dashes" "user/repo:my-great-branch"
-      (Github_branch
-         { user = "user"; repo = "repo"; branch = "my-great-branch" });
+      (Ok
+         (Github_branch
+            { user = "user"; repo = "repo"; branch = "my-great-branch" }));
     test "repo can be omitted and defaults to ocaml" "user:branch"
-      (Github_branch { user = "user"; repo = "ocaml"; branch = "branch" });
+      (Ok (Github_branch { user = "user"; repo = "ocaml"; branch = "branch" }));
     test "repo with PR number" "user/repo#1234"
-      (Github_PR { user = "user"; repo = "repo"; number = 1234 });
+      (Ok (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
     test "defaults to main repo" "#1234"
-      (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 });
-    test "directory name" "." (Local_source_dir ".");
+      (Ok (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
+    test "something that does not parse" "a-random-string" (Error `Unknown);
   ]
 
 let switch_target_tests =
@@ -64,8 +65,6 @@ let switch_target_tests =
     test "branch"
       (Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
       ~expectations:[] ~expected:(Ok "git+https://github.com/USER/REPO#BRANCH");
-    test "local source dir" (Local_source_dir "PATH") ~expectations:[]
-      ~expected:(Ok "PATH");
   ]
 
 let switch_description_tests =
@@ -85,8 +84,6 @@ let switch_description_tests =
     test "Github branch"
       (Github_branch { user = "USER"; repo = "REPO"; branch = "BRANCH" })
       ~github_expectations:[] ~expected:"[opam-compiler] USER/REPO:BRANCH";
-    test "Local source dir" (Local_source_dir "DIR") ~github_expectations:[]
-      ~expected:"[opam-compiler] DIR";
     test "Github PR (successful)" (Github_PR pr)
       ~github_expectations:
         [
