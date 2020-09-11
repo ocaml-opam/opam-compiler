@@ -20,10 +20,25 @@ let configure_command =
           [ "configure-command" ]))
 
 module Create = struct
+  module Source_with_original = struct
+    type t = { source : Source.t; original : string }
+
+    let of_string s =
+      match Source.parse s with
+      | Ok source -> Ok { source; original = s }
+      | Error `Unknown -> Rresult.R.error_msgf "Invalid source: %S" s
+
+    let pp ppf { original; _ } = Format.pp_print_string ppf original
+
+    let conv = Cmdliner.Arg.conv (of_string, pp)
+  end
+
   let source =
     let open Cmdliner.Arg in
     required
-      (pos 0 (some string) None
+      (pos 0
+         (some Source_with_original.conv)
+         None
          (info ~doc:"Where to fetch the compiler." ~docv:"SOURCE" []))
 
   let switch_name =
@@ -49,15 +64,14 @@ module Create = struct
       `I
         ( "Github pull request (short form)",
           "#number (repo defaults to \"ocaml/ocaml\")" );
-      `I ("Directory name", ".");
     ]
 
   let term =
     let open Let_syntax.Cmdliner in
-    let+ source = source
+    let+ { Source_with_original.source; _ } = source
     and+ switch_name = switch_name
     and+ configure_command = configure_command in
-    Create { source = Source.parse source; switch_name; configure_command }
+    Create { source; switch_name; configure_command }
 
   let info =
     Cmdliner.Term.info ~man ~doc:"Create a switch from a compiler source"

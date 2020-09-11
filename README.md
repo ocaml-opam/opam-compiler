@@ -48,12 +48,3 @@ which will create a vanilla compiler. It is possible to override this:
 
     # Just build the bytecode compiler from a pull request
     opam compiler create '#1234' --configure-command "./configure --disable-native-compiler"
-
-It is also possible to create a switch from a local directory.
-
-> :construction: This is a WIP feature, it will mostly work when using "." as
-> source name, and other commands only work well when invoked from the same
-> directory.
-
-    # Use this source tree
-    opam compiler create . --switch-name fast-exceptions
