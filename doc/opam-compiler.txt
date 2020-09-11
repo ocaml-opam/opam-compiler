@@ -8,9 +8,6 @@ COMMANDS
        create
            Create a switch from a compiler source
 
-       reinstall
-           Reinstall the compiler
-
 OPTIONS
        --help[=FMT] (default=auto)
            Show this help in format FMT. The value FMT must be one of `auto',

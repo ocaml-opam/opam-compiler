@@ -57,18 +57,3 @@ It is also possible to create a switch from a local directory.
 
     # Use this source tree
     opam compiler create . --switch-name fast-exceptions
-
-Propagating changes
--------------------
-
-> :construction: This is a WIP feature. It works only with local directories (so
-> above caveats apply), will always reconfigure, and the `opam reinstall`
-> command gets stuck sometimes.
-
-When using a local directory as a source, it is possible to propagate the
-changes to the switch. As described [here](doc/reinstall.txt), it supports two
-strategies:
-
-- a full and safe one (by default) that will reinstall all packages in the
-  switch.
-- a quick and unsafe one that will only reinstall the compiler in place.
