@@ -7,6 +7,8 @@
 (source
  (github ocaml-opam/opam-compiler))
 
+(license ISC)
+
 (authors "Etienne Millon <me@emillon.org>")
 
 (maintainers "Etienne Millon <me@emillon.org>")
@@ -14,6 +16,8 @@
 (package
  (name opam-compiler)
  (synopsis "Plugin to create switches using custom compilers")
+ (description
+   "This plugin can manage switches using various sources for compilers, such as git branches, github PRs, etc")
  (tags (flags:plugin))
  (depends
   (ocaml
