@@ -18,7 +18,6 @@
  (synopsis "Plugin to create switches using custom compilers")
  (description
    "This plugin can manage switches using various sources for compilers, such as git branches, github PRs, etc")
- (tags (flags:plugin))
  (depends
   (ocaml
    (>= 4.08.0))
