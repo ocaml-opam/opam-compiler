@@ -28,6 +28,12 @@ let parse_tests =
     test "defaults to main repo" "#1234"
       (Ok (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
     test "something that does not parse" "a-random-string" (Error `Unknown);
+    test "users can have dashes" "user-with-dashes/repo#1234"
+      (Ok
+         (Github_PR { user = "user-with-dashes"; repo = "repo"; number = 1234 }));
+    test "repos can have dashes" "user/repo-with-dashes#1234"
+      (Ok
+         (Github_PR { user = "user"; repo = "repo-with-dashes"; number = 1234 }));
   ]
 
 let switch_target_tests =
