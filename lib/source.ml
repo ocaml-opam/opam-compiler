@@ -5,15 +5,14 @@ type t = Github_branch of Branch.t | Github_PR of Pull_request.t
 let github_pr pr = Github_PR pr
 
 let parse_as_branch s =
-  let word = Re.rep1 Re.wordc in
   let branch_name = Re.rep1 Re.any in
   let re_branch =
     Re.compile
       (Re.seq
          [
            Re.bos;
-           Re.group word;
-           Re.opt (Re.seq [ Re.char '/'; Re.group word ]);
+           Re.group Pull_request.user_re;
+           Re.opt (Re.seq [ Re.char '/'; Re.group Pull_request.repo_re ]);
            Re.char ':';
            Re.group branch_name;
            Re.eos;
