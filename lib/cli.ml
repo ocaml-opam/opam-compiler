@@ -49,7 +49,8 @@ module Create = struct
          (info ~docv:"SWITCH_NAME"
             ~doc:
               "Use this name for the switch. If omitted, a name is inferred \
-               from the source."
+               from the source. This name is used as is by opam, so passing \
+               \".\" will create a local switch in the current directory."
             [ "switch" ]))
 
   let man =
