@@ -13,8 +13,8 @@ depends: [
   "ocaml" {>= "4.08.0"}
   "bos"
   "cmdliner"
-  "github-unix"
-  "lwt_ssl"
+  "curly"
+  "github"
   "re"
   "alcotest" {>= "1.2.0" & with-test}
 ]
