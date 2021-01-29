@@ -87,10 +87,10 @@ let default =
 
 let main () =
   let result = Cmdliner.Term.eval_choice default [ Create.command ] in
-  ( match result with
+  (match result with
   | `Ok op ->
       eval Runner.real Github_client.real op |> Rresult.R.failwith_error_msg
   | `Version -> ()
   | `Help -> ()
-  | `Error _ -> () );
+  | `Error _ -> ());
   Cmdliner.Term.exit result

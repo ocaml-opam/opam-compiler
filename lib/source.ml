@@ -31,7 +31,7 @@ let parse s =
   match parse_as_branch s with
   | Some r -> Ok r
   | None -> (
-      match parse_as_pr s with Some r -> Ok r | None -> Error `Unknown )
+      match parse_as_pr s with Some r -> Ok r | None -> Error `Unknown)
 
 let pp ppf = function
   | Github_branch branch ->
