@@ -10,5 +10,5 @@ let () =
       match Github_client.pr_info client pr with
       | Ok { source_branch; title } ->
           Format.printf "title: %s\nbranch: %a\n" title Branch.pp source_branch
-      | Error _ -> print_endline "error" )
+      | Error _ -> print_endline "error")
   | _ -> assert false
