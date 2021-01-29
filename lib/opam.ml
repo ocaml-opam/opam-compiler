@@ -58,6 +58,9 @@ let pin_add runner ~name url ~configure_command =
   let cmd = cmd_base @ cmd_rest in
   run_opam runner cmd
 
+let set_base runner ~name =
+  run_opam runner [ A "switch"; A "set-base"; switch name; ocaml_variants ]
+
 let update runner ~name =
   run_opam runner [ A "update"; switch name; ocaml_variants ]
 

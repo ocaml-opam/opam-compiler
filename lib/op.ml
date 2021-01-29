@@ -11,7 +11,8 @@ let create runner github_client source switch_name ~configure_command =
   let open Let_syntax.Result in
   (let* () = Opam.create runner ~name:switch_name ~description in
    let* url = Source.switch_target source github_client in
-   Opam.pin_add runner ~name:switch_name url ~configure_command)
+   let* () = Opam.pin_add runner ~name:switch_name url ~configure_command in
+   Opam.set_base runner ~name:switch_name)
   |> reword_error (fun `Unknown -> msgf "Cannot create switch")
 
 type reinstall_mode = Quick | Full
