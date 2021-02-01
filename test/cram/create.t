@@ -25,3 +25,32 @@ An explicit configure step can be passed:
   Run: OPAMCLI=2.0 opam switch create USER-REPO-BRANCH --empty --description "[opam-compiler] USER/REPO:BRANCH"
   Run: OPAMEDITOR=sed -i -e 's#"./configure"#"./configure" "--enable-x"#g' OPAMCLI=2.0 opam pin add --switch USER-REPO-BRANCH --yes ocaml-variants git+https://github.com/USER/REPO#BRANCH --edit
   Run: OPAMCLI=2.0 opam switch set-base --switch USER-REPO-BRANCH ocaml-variants
+
+Known variants can be supported using --with:
+
+  $ opam-compiler create --dry-run USER/REPO:BRANCH --with afl
+  Run: OPAMCLI=2.0 opam switch create USER-REPO-BRANCH --empty --description "[opam-compiler] USER/REPO:BRANCH"
+  Run: OPAMEDITOR=sed -i -e 's#"./configure"#"./configure" "--with-afl"#g' OPAMCLI=2.0 opam pin add --switch USER-REPO-BRANCH --yes ocaml-variants git+https://github.com/USER/REPO#BRANCH --edit
+  Run: OPAMCLI=2.0 opam switch set-base --switch USER-REPO-BRANCH ocaml-variants
+
+Several of them can be specified:
+
+  $ opam-compiler create --dry-run USER/REPO:BRANCH --with flambda,nnp
+  Run: OPAMCLI=2.0 opam switch create USER-REPO-BRANCH --empty --description "[opam-compiler] USER/REPO:BRANCH"
+  Run: OPAMEDITOR=sed -i -e 's#"./configure"#"./configure" "--enable-flambda" "--disable-naked-pointers"#g' OPAMCLI=2.0 opam pin add --switch USER-REPO-BRANCH --yes ocaml-variants git+https://github.com/USER/REPO#BRANCH --edit
+  Run: OPAMCLI=2.0 opam switch set-base --switch USER-REPO-BRANCH ocaml-variants
+
+A proper error message is displayed if a variant is not recognized:
+
+  $ opam-compiler create --dry-run USER/REPO:BRANCH --with something
+  opam-compiler: option `--with': invalid element in list (`something'):
+                 Unknown variant.
+  Usage: opam-compiler create [OPTION]... SOURCE
+  Try `opam-compiler create --help' or `opam-compiler --help' for more information.
+  [124]
+
+It is not possible to mix --configure-command and --with:
+
+  $ opam-compiler create --dry-run USER/REPO:BRANCH --configure-command "./configure --enable-x" --with afl
+  opam-compiler: --configure-command and --with cannot be passed together.
+  [1]

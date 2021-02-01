@@ -13,13 +13,58 @@ let eval = function
   | Create { source; switch_name; configure_command; runner; github_client } ->
       Op.create runner github_client source switch_name ~configure_command
 
-let configure_command =
+let configure_command_explicit =
   let open Cmdliner.Arg in
   let conv = conv (Bos.Cmd.of_string, Bos.Cmd.pp) in
-  value
-    (opt (some conv) None
-       (info ~doc:"Use this instead of \"./configure\"." ~docv:"COMMAND"
-          [ "configure-command" ]))
+  let info =
+    info ~doc:"Use this instead of \"./configure\"." ~docv:"COMMAND"
+      [ "configure-command" ]
+  in
+  value (opt (some conv) None info)
+
+let with_ =
+  let open Cmdliner.Arg in
+  let parse s =
+    match Ocaml_version.Configure_options.of_string s with
+    | Some opt -> Ok opt
+    | None -> Rresult.R.error_msg "Unknown variant."
+  in
+  let pp ppf opt =
+    Format.fprintf ppf "%s" (Ocaml_version.Configure_options.to_string opt)
+  in
+  let conv = conv (parse, pp) in
+  let info =
+    info
+      ~doc:
+        "Create a switch with this set of features. For example --with \
+         flambda,nnp will create a switch with the flambda and \
+         no-naked-pointers features enabled."
+      ~docv:"FEATURES" [ "with" ]
+  in
+  value (opt (some (list conv)) None info)
+
+let configure_command =
+  let open Let_syntax.Cmdliner in
+  let use_command cmd = `Ok (Some cmd) in
+  let default = `Ok None in
+  let error m = `Error (false, m) in
+  let ret_term =
+    let+ explicit = configure_command_explicit and+ with_ = with_ in
+    match (explicit, with_) with
+    | Some e, None -> use_command e
+    | None, None -> default
+    | None, Some opts ->
+        let ocaml_version = Ocaml_version.Releases.latest in
+        let add_opt cmd opt =
+          Bos.Cmd.add_arg cmd
+            (Ocaml_version.Configure_options.to_configure_flag ocaml_version opt)
+        in
+        let configure = Bos.Cmd.v "./configure" in
+        use_command (List.fold_left add_opt configure opts)
+    | Some _, Some _ ->
+        error "--configure-command and --with cannot be passed together."
+  in
+  Cmdliner.Term.ret ret_term
 
 module Create = struct
   module Source_with_original = struct
