@@ -26,6 +26,10 @@ OPTIONS
        --configure-command=COMMAND
            Use this instead of "./configure".
 
+       --dry-run
+           Do not perform external commands. Print them and continue as if
+           they worked.
+
        --help[=FMT] (default=auto)
            Show this help in format FMT. The value FMT must be one of `auto',
            `pager', `groff' or `plain'. With `auto', the format is `pager` or

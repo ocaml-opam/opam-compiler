@@ -34,54 +34,10 @@ let create_tests =
         % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
       None )
   in
-  let pin_add_cmd =
-    Bos.Cmd.(
-      v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
-      % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH")
-  in
-  let pin_add_call = (pin_add_cmd, None) in
   [
-    test "create: everything ok, default switch"
-      [
-        Mock.expect create_call ~and_return:(Ok ());
-        Mock.expect pin_add_call ~and_return:(Ok ());
-      ]
-      ~expected:(Ok ());
-    test "create: everything ok, explicit switch"
-      ~switch_name:(Switch_name.of_string_exn "SWITCH-NAME")
-      [
-        Mock.expect
-          ( Bos.Cmd.(
-              v "opam" % "switch" % "create" % "SWITCH-NAME" % "--empty"
-              % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
-            None )
-          ~and_return:(Ok ());
-        Mock.expect
-          ( Bos.Cmd.(
-              v "opam" % "pin" % "add" % "--switch" % "SWITCH-NAME" % "--yes"
-              % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH"),
-            None )
-          ~and_return:(Ok ());
-      ]
-      ~expected:(Ok ());
     test "create: first create fails"
       [ Mock.expect create_call ~and_return:(Error `Unknown) ]
       ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: explicit configure"
-      ~configure_command:Bos.Cmd.(v "./configure" % "--enable-x")
-      [
-        Mock.expect create_call ~and_return:(Ok ());
-        Mock.expect
-          ( Bos.Cmd.(pin_add_cmd % "--edit"),
-            Some
-              [
-                ( "OPAMEDITOR",
-                  {|sed -i -e 's#"./configure"#"./configure" "--enable-x"#g'|}
-                );
-              ] )
-          ~and_return:(Ok ());
-      ]
-      ~expected:(Ok ());
   ]
 
 let reinstall_tests =

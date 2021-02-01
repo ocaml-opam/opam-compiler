@@ -1,6 +1,8 @@
-(lang dune 2.5)
+(lang dune 2.7)
 
 (name opam-compiler)
+
+(cram enable)
 
 (generate_opam_files true)
 
