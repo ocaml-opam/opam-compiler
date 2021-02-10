@@ -8,6 +8,8 @@ type t = {
 
 val real : t
 
+val dry_run : t
+
 val run :
   t ->
   ?extra_env:(string * string) list ->

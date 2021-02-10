@@ -33,9 +33,8 @@ module Real = struct
     | pull -> Ok pull
     | exception Yojson.Json_error _ -> Error `Unknown
 
-  let pull_url pr =
+  let pull_url { Pull_request.user; repo; number } =
     let root = "https://api.github.com" in
-    let { Pull_request.user; repo; number; _ } = pr in
     Printf.sprintf "%s/repos/%s/%s/pulls/%d" root user repo number
 
   let get url =
@@ -53,4 +52,22 @@ end
 
 let real =
   let open Real in
+  { pr_info }
+
+module Dry_run = struct
+  let pr_info { Pull_request.user; repo; number } =
+    let slug = Printf.sprintf "%s-%s-%d" user repo number in
+    let source_branch =
+      {
+        Branch.user = Printf.sprintf "user-%s" slug;
+        repo = Printf.sprintf "repo-%s" slug;
+        branch = Printf.sprintf "branch-%s" slug;
+      }
+    in
+    let title = Printf.sprintf "Title of %s" slug in
+    Ok { source_branch; title }
+end
+
+let dry_run =
+  let open Dry_run in
   { pr_info }

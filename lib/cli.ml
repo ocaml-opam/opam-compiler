@@ -5,10 +5,12 @@ type t =
       source : Source.t;
       switch_name : Switch_name.t option;
       configure_command : Bos.Cmd.t option;
+      runner : Runner.t;
+      github_client : Github_client.t;
     }
 
-let eval runner github_client = function
-  | Create { source; switch_name; configure_command } ->
+let eval = function
+  | Create { source; switch_name; configure_command; runner; github_client } ->
       Op.create runner github_client source switch_name ~configure_command
 
 let configure_command =
@@ -53,6 +55,26 @@ module Create = struct
                \".\" will create a local switch in the current directory."
             [ "switch" ]))
 
+  let dry_run =
+    let open Cmdliner.Arg in
+    let info =
+      info
+        ~doc:
+          "Do not perform external commands. Print them and continue as if \
+           they worked."
+        [ "dry-run" ]
+    in
+    value (flag info)
+
+  let clients =
+    let open Let_syntax.Cmdliner in
+    let+ dry_run = dry_run in
+    let runner = if dry_run then Runner.dry_run else Runner.real in
+    let github_client =
+      if dry_run then Github_client.dry_run else Github_client.real
+    in
+    (runner, github_client)
+
   let man =
     [
       `S Cmdliner.Manpage.s_description;
@@ -71,8 +93,9 @@ module Create = struct
     let open Let_syntax.Cmdliner in
     let+ { Source_with_original.source; _ } = source
     and+ switch_name = switch_name
-    and+ configure_command = configure_command in
-    Create { source; switch_name; configure_command }
+    and+ configure_command = configure_command
+    and+ runner, github_client = clients in
+    Create { source; switch_name; configure_command; runner; github_client }
 
   let info =
     Cmdliner.Term.info ~man ~doc:"Create a switch from a compiler source"
@@ -88,8 +111,7 @@ let default =
 let main () =
   let result = Cmdliner.Term.eval_choice default [ Create.command ] in
   (match result with
-  | `Ok op ->
-      eval Runner.real Github_client.real op |> Rresult.R.failwith_error_msg
+  | `Ok op -> eval op |> Rresult.R.failwith_error_msg
   | `Version -> ()
   | `Help -> ()
   | `Error _ -> ());
