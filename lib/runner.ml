@@ -1,14 +1,12 @@
 open! Import
 
+type run_error = [ `Command_failed of Bos.Cmd.t | `Unknown ]
+
 type t = {
   run :
-    ?extra_env:(string * string) list ->
-    Bos.Cmd.t ->
-    (unit, [ `Unknown ]) result;
+    ?extra_env:(string * string) list -> Bos.Cmd.t -> (unit, run_error) result;
   run_out :
-    ?extra_env:(string * string) list ->
-    Bos.Cmd.t ->
-    (string, [ `Unknown ]) result;
+    ?extra_env:(string * string) list -> Bos.Cmd.t -> (string, run_error) result;
 }
 
 module Real = struct
@@ -28,7 +26,7 @@ module Real = struct
     let open Let_syntax.Result in
     let* env = explicit_env extra_env in
     Bos.OS.Cmd.in_null |> Bos.OS.Cmd.run_in ?env cmd
-    |> Rresult.R.reword_error (fun _ -> `Unknown)
+    |> Rresult.R.reword_error (fun _ -> `Command_failed cmd)
 
   let run_out ?extra_env cmd =
     let open Let_syntax.Result in
@@ -56,6 +54,10 @@ let dry_run =
   let open Dry_run in
   { run; run_out }
 
-let run_out t = t.run_out
+let run_out t ?extra_env cmd =
+  (t.run_out ?extra_env cmd
+    : (_, run_error) result
+    :> (_, [> run_error ]) result)
 
-let run t = t.run
+let run t ?extra_env cmd =
+  (t.run ?extra_env cmd : (_, run_error) result :> (_, [> run_error ]) result)
