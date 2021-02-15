@@ -1,5 +1,4 @@
 open Opam_compiler
-open Helpers
 
 let error =
   let pp_error ppf = function `Unknown -> Format.fprintf ppf "Unknown" in
@@ -41,10 +40,13 @@ let switch_target_tests =
     ( name,
       `Quick,
       fun () ->
-        let$ pr_info = Mock.create (module Pull_request) __LOC__ expectations in
+        let pr_info, check =
+          Mock.create (module Pull_request) __LOC__ expectations
+        in
         let github_client = { Github_client.pr_info } in
         let got = Source.switch_target source github_client in
-        Alcotest.check Alcotest.(result string error) __LOC__ expected got )
+        Alcotest.check Alcotest.(result string error) __LOC__ expected got;
+        check () )
   in
   let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
   [
@@ -78,12 +80,13 @@ let switch_description_tests =
     ( name,
       `Quick,
       fun () ->
-        let$ pr_info =
+        let pr_info, check =
           Mock.create (module Pull_request) __LOC__ github_expectations
         in
         let github_client = { Github_client.pr_info } in
         let got = Source.switch_description source github_client in
-        Alcotest.check Alcotest.(string) __LOC__ expected got )
+        Alcotest.check Alcotest.(string) __LOC__ expected got;
+        check () )
   in
   let pr = { Pull_request.user = "USER"; repo = "REPO"; number = 1234 } in
   [

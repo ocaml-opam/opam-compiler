@@ -11,13 +11,15 @@ let rec add_spec (cmd, env) = function
 
 and add_spec_list cmd l = List.fold_left add_spec cmd l
 
-let opam = Bos.Cmd.v "opam"
-
-let opam_cmd l = add_spec_list (opam, None) l
+let opam_cmd l = add_spec_list (Bos.Cmd.v "opam", None) l
 
 let run_opam runner args =
   let cmd, extra_env = opam_cmd args in
   Runner.run ?extra_env runner cmd
+
+let run_out_opam runner args =
+  let cmd, extra_env = opam_cmd args in
+  Runner.run_out ?extra_env runner cmd
 
 let ocaml_variants = A "ocaml-variants"
 
@@ -61,8 +63,7 @@ let update runner ~name =
 
 let reinstall_configure runner ~configure_command =
   let open Let_syntax.Result in
-  let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
-  let* prefix = Runner.run_out runner prefix_cmd in
+  let* prefix = run_out_opam runner [ A "config"; A "var"; A "prefix" ] in
   let base_command =
     Option.value configure_command ~default:Bos.Cmd.(v "./configure")
   in
