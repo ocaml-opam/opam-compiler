@@ -30,7 +30,7 @@ end
 
 let pp_env ppf = function
   | None -> ()
-  | Some kvs -> List.iter (fun (k, v) -> Format.fprintf ppf "%s=%S " k v) kvs
+  | Some kvs -> List.iter (fun (k, v) -> Format.fprintf ppf "%s=%s " k v) kvs
 
 let needs_quoting s = Astring.String.exists Astring.Char.Ascii.is_white s
 

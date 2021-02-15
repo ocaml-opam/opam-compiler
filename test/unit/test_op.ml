@@ -62,7 +62,7 @@ let reinstall_tests =
         [
           Mock.expect
             ( v "./configure" % "--prefix"
-              % "$(OPAMCLI=\"2.0\" opam config var prefix)",
+              % "$(OPAMCLI=2.0 opam config var prefix)",
               None )
             ~and_return:(Ok ());
           Mock.expect (v "make", None) ~and_return:(Ok ());
@@ -74,7 +74,7 @@ let reinstall_tests =
         [
           Mock.expect
             ( v "./configure" % "--prefix"
-              % "$(OPAMCLI=\"2.0\" opam config var prefix)",
+              % "$(OPAMCLI=2.0 opam config var prefix)",
               None )
             ~and_return:(Ok ());
           Mock.expect (v "make", None) ~and_return:(Ok ());
@@ -92,7 +92,7 @@ let reinstall_tests =
         [
           Mock.expect
             ( v "./configure" % "--enable-something" % "--prefix"
-              % "$(OPAMCLI=\"2.0\" opam config var prefix)",
+              % "$(OPAMCLI=2.0 opam config var prefix)",
               None )
             ~and_return:(Ok ());
           Mock.expect (v "make", None) ~and_return:(Ok ());
