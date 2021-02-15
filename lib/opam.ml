@@ -11,7 +11,7 @@ let rec add_spec (cmd, env) = function
 
 and add_spec_list cmd l = List.fold_left add_spec cmd l
 
-let opam_cmd l = add_spec_list (Bos.Cmd.v "opam", None) l
+let opam_cmd l = add_spec_list (Bos.Cmd.v "opam", Some [ ("OPAMCLI", "2.0") ]) l
 
 let run_opam runner args =
   let cmd, extra_env = opam_cmd args in

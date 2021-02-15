@@ -33,7 +33,7 @@ let create_tests =
     ( Bos.Cmd.(
         v "opam" % "switch" % "create" % "USER-REPO-BRANCH" % "--empty"
         % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
-      None )
+      Some [ ("OPAMCLI", "2.0") ] )
   in
   [
     test "create: first create fails"
@@ -55,12 +55,15 @@ let reinstall_tests =
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         check () )
   in
+  let opam_cli_env = Some [ ("OPAMCLI", "2.0") ] in
   [
     test "reinstall (quick)" Quick None
       Bos.Cmd.
         [
           Mock.expect
-            (v "./configure" % "--prefix" % "$(opam config var prefix)", None)
+            ( v "./configure" % "--prefix"
+              % "$(OPAMCLI=\"2.0\" opam config var prefix)",
+              None )
             ~and_return:(Ok ());
           Mock.expect (v "make", None) ~and_return:(Ok ());
           Mock.expect (v "make" % "install", None) ~and_return:(Ok ());
@@ -70,14 +73,16 @@ let reinstall_tests =
       Bos.Cmd.
         [
           Mock.expect
-            (v "./configure" % "--prefix" % "$(opam config var prefix)", None)
+            ( v "./configure" % "--prefix"
+              % "$(OPAMCLI=\"2.0\" opam config var prefix)",
+              None )
             ~and_return:(Ok ());
           Mock.expect (v "make", None) ~and_return:(Ok ());
           Mock.expect (v "make" % "install", None) ~and_return:(Ok ());
           Mock.expect
             ( v "opam" % "reinstall" % "--assume-built" % "--working-dir"
               % "ocaml-variants",
-              None )
+              opam_cli_env )
             ~and_return:(Ok ());
         ]
       ~expected:(Ok ());
@@ -87,7 +92,7 @@ let reinstall_tests =
         [
           Mock.expect
             ( v "./configure" % "--enable-something" % "--prefix"
-              % "$(opam config var prefix)",
+              % "$(OPAMCLI=\"2.0\" opam config var prefix)",
               None )
             ~and_return:(Ok ());
           Mock.expect (v "make", None) ~and_return:(Ok ());
