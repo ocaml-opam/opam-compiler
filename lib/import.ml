@@ -27,3 +27,17 @@ module Let_syntax = struct
     let ( let* ) = Result.bind
   end
 end
+
+let pp_env ppf = function
+  | None -> ()
+  | Some kvs -> List.iter (fun (k, v) -> Format.fprintf ppf "%s=%s " k v) kvs
+
+let needs_quoting s = Astring.String.exists Astring.Char.Ascii.is_white s
+
+let quote s = Printf.sprintf {|"%s"|} s
+
+let quote_if_needed s = if needs_quoting s then quote s else s
+
+let pp_cmd ppf cmd =
+  Bos.Cmd.to_list cmd |> List.map quote_if_needed |> String.concat " "
+  |> Format.pp_print_string ppf

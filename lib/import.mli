@@ -22,3 +22,7 @@ module Let_syntax : sig
     val ( let* ) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result
   end
 end
+
+val pp_env : Format.formatter -> (string * string) list option -> unit
+
+val pp_cmd : Format.formatter -> Bos.Cmd.t -> unit

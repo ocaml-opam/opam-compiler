@@ -1,26 +1,48 @@
 open! Import
 
-let opam = Bos.Cmd.v "opam"
+type spec = A of string | L of spec list | Set_env of string * string
 
-let ocaml_variants = "ocaml-variants"
+let add_env env kv = Some (kv :: Option.value env ~default:[])
+
+let rec add_spec (cmd, env) = function
+  | A s -> (Bos.Cmd.(cmd % s), env)
+  | L l -> add_spec_list (cmd, env) l
+  | Set_env (k, v) -> (cmd, add_env env (k, v))
+
+and add_spec_list cmd l = List.fold_left add_spec cmd l
+
+let opam_cmd l = add_spec_list (Bos.Cmd.v "opam", Some [ ("OPAMCLI", "2.0") ]) l
+
+let run_opam runner args =
+  let cmd, extra_env = opam_cmd args in
+  Runner.run ?extra_env runner cmd
+
+let run_out_opam runner args =
+  let cmd, extra_env = opam_cmd args in
+  Runner.run_out ?extra_env runner cmd
+
+let ocaml_variants = A "ocaml-variants"
 
 let create runner ~name ~description =
-  let create_cmd =
-    let open Bos.Cmd in
-    opam % "switch" % "create" % Switch_name.to_string name % "--empty"
-    % "--description" % description
-  in
-  Runner.run runner create_cmd
+  run_opam runner
+    [
+      A "switch";
+      A "create";
+      A (Switch_name.to_string name);
+      A "--empty";
+      A "--description";
+      A description;
+    ]
+
+let switch name = L [ A "--switch"; A (Switch_name.to_string name) ]
 
 let pin_add runner ~name url ~configure_command =
-  let cmd =
-    Bos.Cmd.(
-      opam % "pin" % "add" % "--switch" % Switch_name.to_string name % "--yes"
-      % ocaml_variants % url)
+  let cmd_base =
+    [ A "pin"; A "add"; switch name; A "--yes"; ocaml_variants; A url ]
   in
-  let cmd, extra_env =
+  let cmd_rest =
     match configure_command with
-    | None -> (cmd, None)
+    | None -> []
     | Some configure_command ->
         let opam_quote s = Printf.sprintf {|"%s"|} s in
         let configure_in_opam_format =
@@ -31,19 +53,17 @@ let pin_add runner ~name url ~configure_command =
           Printf.sprintf {|sed -i -e 's#"./configure"#%s#g'|}
             configure_in_opam_format
         in
-        (Bos.Cmd.(cmd % "--edit"), Some [ ("OPAMEDITOR", sed_command) ])
+        [ A "--edit"; Set_env ("OPAMEDITOR", sed_command) ]
   in
-  Runner.run ?extra_env runner cmd
+  let cmd = cmd_base @ cmd_rest in
+  run_opam runner cmd
 
 let update runner ~name =
-  Runner.run runner
-    (let open Bos.Cmd in
-    opam % "update" % "--switch" % Switch_name.to_string name % ocaml_variants)
+  run_opam runner [ A "update"; switch name; ocaml_variants ]
 
 let reinstall_configure runner ~configure_command =
   let open Let_syntax.Result in
-  let prefix_cmd = Bos.Cmd.(opam % "config" % "var" % "prefix") in
-  let* prefix = Runner.run_out runner prefix_cmd in
+  let* prefix = run_out_opam runner [ A "config"; A "var"; A "prefix" ] in
   let base_command =
     Option.value configure_command ~default:Bos.Cmd.(v "./configure")
   in
@@ -59,7 +79,5 @@ let reinstall_compiler runner ~configure_command =
   Runner.run runner make_install
 
 let reinstall_packages runner =
-  Runner.run runner
-    Bos.Cmd.(
-      v "opam" % "reinstall" % "--assume-built" % "--working-dir"
-      % "ocaml-variants")
+  run_opam runner
+    [ A "reinstall"; A "--assume-built"; A "--working-dir"; ocaml_variants ]

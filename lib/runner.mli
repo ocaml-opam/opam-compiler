@@ -3,7 +3,10 @@ type t = {
     ?extra_env:(string * string) list ->
     Bos.Cmd.t ->
     (unit, [ `Unknown ]) result;
-  run_out : Bos.Cmd.t -> (string, [ `Unknown ]) result;
+  run_out :
+    ?extra_env:(string * string) list ->
+    Bos.Cmd.t ->
+    (string, [ `Unknown ]) result;
 }
 
 val real : t
@@ -16,4 +19,8 @@ val run :
   Bos.Cmd.t ->
   (unit, [ `Unknown ]) result
 
-val run_out : t -> Bos.Cmd.t -> (string, [ `Unknown ]) result
+val run_out :
+  t ->
+  ?extra_env:(string * string) list ->
+  Bos.Cmd.t ->
+  (string, [ `Unknown ]) result
