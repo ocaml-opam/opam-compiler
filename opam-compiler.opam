@@ -15,6 +15,7 @@ depends: [
   "cmdliner"
   "curly"
   "github"
+  "ocaml-version"
   "re"
   "alcotest" {>= "1.2.0" & with-test}
   "odoc" {with-doc}

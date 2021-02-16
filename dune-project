@@ -27,6 +27,7 @@
   cmdliner
   curly
   github
+  ocaml-version
   re
   (alcotest
    (and

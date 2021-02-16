@@ -40,3 +40,8 @@ OPTIONS
            the source. This name is used as is by opam, so passing "." will
            create a local switch in the current directory.
 
+       --with=FEATURES
+           Create a switch with this set of features. For example --with
+           flambda,nnp will create a switch with the flambda and
+           no-naked-pointers features enabled.
+
