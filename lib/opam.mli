@@ -11,6 +11,8 @@ val pin_add :
   configure_command:Bos.Cmd.t option ->
   (unit, [ `Unknown ]) result
 
+val set_base : Runner.t -> name:Switch_name.t -> (unit, [ `Unknown ]) result
+
 val update : Runner.t -> name:Switch_name.t -> (unit, [ `Unknown ]) result
 
 val reinstall_compiler :
