@@ -11,6 +11,8 @@ let run_mock loc expectations =
   let run ?extra_env cmd = run_mock (cmd, extra_env) in
   (run, check)
 
+let opam_cli_env = Some [ ("OPAMCLI", "2.0") ]
+
 let create_tests =
   let test name ?switch_name ?configure_command expectations ~expected =
     ( name,
@@ -29,16 +31,25 @@ let create_tests =
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         check () )
   in
-  let create_call =
-    ( Bos.Cmd.(
-        v "opam" % "switch" % "create" % "USER-REPO-BRANCH" % "--empty"
-        % "--description" % "[opam-compiler] USER/REPO:BRANCH"),
-      Some [ ("OPAMCLI", "2.0") ] )
+  let create_cmd =
+    Bos.Cmd.(
+      v "opam" % "switch" % "create" % "USER-REPO-BRANCH" % "--empty"
+      % "--description" % "[opam-compiler] USER/REPO:BRANCH")
   in
+  let create_call = (create_cmd, opam_cli_env) in
   [
-    test "create: first create fails"
+    test "create: create fails with unknown error"
       [ Mock.expect create_call ~and_return:(Error `Unknown) ]
       ~expected:(Error (`Msg "Cannot create switch"));
+    test "create: when opam command fails"
+      [
+        Mock.expect create_call ~and_return:(Error (`Command_failed create_cmd));
+        Mock.expect
+          ( Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH"),
+            opam_cli_env )
+          ~and_return:(Ok ());
+      ]
+      ~expected:(Ok ());
   ]
 
 let reinstall_tests =
@@ -55,7 +66,6 @@ let reinstall_tests =
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         check () )
   in
-  let opam_cli_env = Some [ ("OPAMCLI", "2.0") ] in
   [
     test "reinstall (quick)" Quick None
       Bos.Cmd.

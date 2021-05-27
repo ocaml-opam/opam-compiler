@@ -84,3 +84,6 @@ let reinstall_compiler runner ~configure_command =
 let reinstall_packages runner =
   run_opam runner
     [ A "reinstall"; A "--assume-built"; A "--working-dir"; ocaml_variants ]
+
+let remove_switch runner ~name =
+  run_opam runner [ A "switch"; A "remove"; A (Switch_name.to_string name) ]

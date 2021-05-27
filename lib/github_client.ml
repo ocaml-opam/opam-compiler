@@ -4,7 +4,8 @@ type pr_info = { source_branch : Branch.t; title : string }
 
 type t = { pr_info : Pull_request.t -> (pr_info, [ `Unknown ]) result }
 
-let pr_info t = t.pr_info
+let pr_info t pr =
+  (t.pr_info pr : (_, [ `Unknown ]) result :> (_, [> `Unknown ]) result)
 
 module Real = struct
   let pull_source_user branch =
