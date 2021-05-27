@@ -47,7 +47,7 @@ module Dry_run = struct
 
   let run_out ?extra_env cmd =
     Format.printf "Run_out: %a%a\n" pp_env extra_env pp_cmd cmd;
-    Ok "output"
+    Format.kasprintf Rresult.R.ok "$(%a%a)" pp_env extra_env pp_cmd cmd
 end
 
 let dry_run =
