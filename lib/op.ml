@@ -1,11 +1,5 @@
 open! Import
 
-let translate_error s =
-  let open Rresult.R in
-  reword_error (function
-    | `Unknown -> msgf "%s" s
-    | `Command_failed cmd -> msgf "%s - command failed: %a" s pp_cmd cmd)
-
 let create runner github_client source switch_name ~configure_command =
   let switch_name =
     match switch_name with

@@ -1,0 +1,3 @@
+(test
+ (name client)
+ (libraries opam_compiler))

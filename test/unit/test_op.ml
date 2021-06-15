@@ -45,7 +45,8 @@ let create_tests =
       [
         Mock.expect create_call ~and_return:(Error (`Command_failed create_cmd));
         Mock.expect
-          ( Bos.Cmd.(v "opam" % "switch" % "remove" % "USER-REPO-BRANCH"),
+          ( Bos.Cmd.(
+              v "opam" % "switch" % "remove" % "--yes" % "USER-REPO-BRANCH"),
             opam_cli_env )
           ~and_return:(Ok ());
       ]

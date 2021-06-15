@@ -41,3 +41,11 @@ let quote_if_needed s = if needs_quoting s then quote s else s
 let pp_cmd ppf cmd =
   Bos.Cmd.to_list cmd |> List.map quote_if_needed |> String.concat " "
   |> Format.pp_print_string ppf
+
+type error = [ `Command_failed of Bos.Cmd.t | `Unknown ]
+
+let translate_error s =
+  let open Rresult.R in
+  reword_error (function
+    | `Unknown -> msgf "%s" s
+    | `Command_failed cmd -> msgf "%s - command failed: %a" s pp_cmd cmd)
