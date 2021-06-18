@@ -27,7 +27,7 @@
   cmdliner
   curly
   (either :with-test)
-  github
+  github-data
   ocaml-version
   re
   (alcotest
