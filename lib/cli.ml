@@ -8,10 +8,17 @@ type t =
       runner : Runner.t;
       github_client : Github_client.t;
     }
+  | Reinstall of {
+      mode : Op.reinstall_mode;
+      switch_name : Switch_name.t option;
+      runner : Runner.t;
+    }
 
 let eval = function
   | Create { source; switch_name; configure_command; runner; github_client } ->
       Op.create runner github_client source switch_name ~configure_command
+  | Reinstall { mode; switch_name; runner } ->
+      Op.reinstall runner mode ~name:switch_name
 
 let configure_command_explicit =
   let open Cmdliner.Arg in
@@ -66,6 +73,38 @@ let configure_command =
   in
   Cmdliner.Term.ret ret_term
 
+let dry_run =
+  let open Cmdliner.Arg in
+  let info =
+    info
+      ~doc:
+        "Do not perform external commands. Print them and continue as if they \
+         worked."
+      [ "dry-run" ]
+  in
+  value (flag info)
+
+let clients =
+  let open Let_syntax.Cmdliner in
+  let+ dry_run = dry_run in
+  let runner = if dry_run then Runner.dry_run else Runner.real in
+  let github_client =
+    if dry_run then Github_client.dry_run else Github_client.real
+  in
+  (runner, github_client)
+
+let switch_name =
+  let open Cmdliner.Arg in
+  let conv = conv (Switch_name.parse, Switch_name.pp) in
+  value
+    (opt (some conv) None
+       (info ~docv:"SWITCH_NAME"
+          ~doc:
+            "Use this name for the switch. If omitted, a name is inferred from \
+             the source. This name is used as is by opam, so passing \".\" \
+             will create a local switch in the current directory."
+          [ "switch" ]))
+
 module Create = struct
   module Source_with_original = struct
     type t = { source : Source.t; original : string }
@@ -88,38 +127,6 @@ module Create = struct
          None
          (info ~doc:"Where to fetch the compiler." ~docv:"SOURCE" []))
 
-  let switch_name =
-    let open Cmdliner.Arg in
-    let conv = conv (Switch_name.parse, Switch_name.pp) in
-    value
-      (opt (some conv) None
-         (info ~docv:"SWITCH_NAME"
-            ~doc:
-              "Use this name for the switch. If omitted, a name is inferred \
-               from the source. This name is used as is by opam, so passing \
-               \".\" will create a local switch in the current directory."
-            [ "switch" ]))
-
-  let dry_run =
-    let open Cmdliner.Arg in
-    let info =
-      info
-        ~doc:
-          "Do not perform external commands. Print them and continue as if \
-           they worked."
-        [ "dry-run" ]
-    in
-    value (flag info)
-
-  let clients =
-    let open Let_syntax.Cmdliner in
-    let+ dry_run = dry_run in
-    let runner = if dry_run then Runner.dry_run else Runner.real in
-    let github_client =
-      if dry_run then Github_client.dry_run else Github_client.real
-    in
-    (runner, github_client)
-
   let man =
     [
       `S Cmdliner.Manpage.s_description;
@@ -132,6 +139,7 @@ module Create = struct
       `I
         ( "Github pull request (short form)",
           "#number (repo defaults to \"ocaml/ocaml\")" );
+      `I ("Directory", "path/to/sources");
     ]
 
   let term =
@@ -149,12 +157,54 @@ module Create = struct
   let command = (term, info)
 end
 
+module Reinstall = struct
+  let reinstall_mode =
+    let open Cmdliner.Arg in
+    value
+      (vflag Op.Full
+         [
+           ( Full,
+             info ~doc:"Perform a full reinstallation (default)." [ "full" ] );
+           ( Quick,
+             info ~doc:"Perform a quick reinstallation (unsafe)" [ "quick" ] );
+         ])
+
+  let term =
+    let open Let_syntax.Cmdliner in
+    let+ mode = reinstall_mode
+    and+ switch_name = switch_name
+    and+ runner, _github_client = clients in
+    Reinstall { mode; switch_name; runner }
+
+  let man =
+    [
+      `P "Reinstall the compiler will propagate the changes done to its source.";
+      `P "There are two ways to reinstall:";
+      `I
+        ( "Full (default)",
+          "Reinstall the compiler and all the packages in the switch. This can \
+           be slow but is always safe." );
+      `I
+        ( "Quick (unsafe)",
+          "Only reinstall the compiler. This is fast, but will break the \
+           switch if the way it compiles is modified for example." );
+    ]
+
+  let info =
+    let open Cmdliner.Term in
+    info ~man ~doc:"Reinstall the compiler" "reinstall"
+
+  let command = (term, info)
+end
+
 let default =
   let open Cmdliner.Term in
   (ret (pure (`Help (`Auto, None))), info "opam-compiler")
 
 let main () =
-  let result = Cmdliner.Term.eval_choice default [ Create.command ] in
+  let result =
+    Cmdliner.Term.eval_choice default [ Create.command; Reinstall.command ]
+  in
   (match result with
   | `Ok op -> eval op |> Rresult.R.failwith_error_msg
   | `Version -> ()

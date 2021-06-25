@@ -1,11 +1,17 @@
 open Opam_compiler
-open Import
+open! Import
 
 let msg = Alcotest.testable Rresult.R.pp_msg ( = )
 
 let cmd = Alcotest.testable pp_cmd Bos.Cmd.equal
 
 type call_run = {
+  command : Bos.Cmd.t;
+  extra_env : (string * string) list option;
+  chdir : Fpath.t option;
+}
+
+type call_run_out = {
   command : Bos.Cmd.t;
   extra_env : (string * string) list option;
 }
@@ -19,8 +25,9 @@ let alcotest_contramap (type a) ~f t =
 let mock_runner loc expectations =
   let call_run_testable =
     alcotest_contramap
-      Alcotest.(pair cmd (option (list (pair string string))))
-      ~f:(fun { command; extra_env } -> (command, extra_env))
+      Alcotest.(
+        triple cmd (option (list (pair string string))) (option (module Fpath)))
+      ~f:(fun { command; extra_env; chdir } -> (command, extra_env, chdir))
   in
   let call_run_out_testable =
     alcotest_contramap
@@ -30,7 +37,7 @@ let mock_runner loc expectations =
   let call_run, call_run_out, check =
     Mock.create2 call_run_testable call_run_out_testable loc expectations
   in
-  let run ?extra_env command = call_run { command; extra_env } in
+  let run ?extra_env ?chdir command = call_run { command; extra_env; chdir } in
   let run_out ?extra_env command = call_run_out { command; extra_env } in
   let runner = { Runner.run; run_out } in
   (runner, check)
@@ -61,13 +68,17 @@ let create_tests =
       v "opam" % "switch" % "create" % "USER-REPO-BRANCH" % "--empty"
       % "--description" % "[opam-compiler] USER/REPO:BRANCH")
   in
-  let create_call = { command = create_cmd; extra_env = opam_cli_env } in
+  let create_call =
+    { command = create_cmd; extra_env = opam_cli_env; chdir = None }
+  in
   let pin_add_cmd =
     Bos.Cmd.(
       v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
       % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH")
   in
-  let pin_add_call = { command = pin_add_cmd; extra_env = opam_cli_env } in
+  let pin_add_call =
+    { command = pin_add_cmd; extra_env = opam_cli_env; chdir = None }
+  in
   [
     test "create: create fails with unknown error"
       [ Mock.expect create_call ~and_return:(Error `Unknown) ]
@@ -83,6 +94,7 @@ let create_tests =
               Bos.Cmd.(
                 v "opam" % "switch" % "remove" % "--yes" % "USER-REPO-BRANCH");
             extra_env = opam_cli_env;
+            chdir = None;
           }
           ~and_return:(Ok ());
       ]
@@ -94,78 +106,66 @@ let create_tests =
   ]
 
 let reinstall_tests =
-  let test name mode configure_command expectations ~expected =
+  let test name ~expectations ~expected =
     ( name,
       `Quick,
       fun () ->
         let runner, check = mock_runner __LOC__ expectations in
-        let got = Op.reinstall runner mode ~configure_command in
+        let got = Op.reinstall runner Quick ~name:None in
         Alcotest.check Alcotest.(result unit msg) __LOC__ expected got;
         check () )
   in
-  let expect_run ~command ~extra_env ~and_return =
-    Either.Left (Mock.expect { command; extra_env } ~and_return)
+  let expect_run ~command ~extra_env ~chdir ~and_return =
+    Either.Left (Mock.expect { command; extra_env; chdir } ~and_return)
   in
   let expect_run_out ~command ~extra_env ~and_return =
     Either.Right (Mock.expect { command; extra_env } ~and_return)
   in
   [
-    test "reinstall (quick)" Quick None
-      [
-        expect_run_out
-          ~command:Bos.Cmd.(v "opam" % "config" % "var" % "prefix")
-          ~extra_env:opam_cli_env ~and_return:(Ok "PREFIX");
-        expect_run
-          ~command:Bos.Cmd.(v "./configure" % "--prefix" % "PREFIX")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:Bos.Cmd.(v "make")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:Bos.Cmd.(v "make" % "install")
-          ~extra_env:None ~and_return:(Ok ());
-      ]
-      ~expected:(Ok ());
-    test "reinstall (full)" Full None
-      [
-        expect_run_out
-          ~command:Bos.Cmd.(v "opam" % "config" % "var" % "prefix")
-          ~extra_env:opam_cli_env ~and_return:(Ok "PREFIX");
-        expect_run
-          ~command:Bos.Cmd.(v "./configure" % "--prefix" % "PREFIX")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:Bos.Cmd.(v "make")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:Bos.Cmd.(v "make" % "install")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:
-            Bos.Cmd.(
-              v "opam" % "reinstall" % "--assume-built" % "--working-dir"
-              % "ocaml-variants")
-          ~extra_env:opam_cli_env ~and_return:(Ok ());
-      ]
-      ~expected:(Ok ());
-    test "reinstall (different configure command)" Quick
-      (Some Bos.Cmd.(v "./configure" % "--enable-something"))
-      [
-        expect_run_out
-          ~command:Bos.Cmd.(v "opam" % "config" % "var" % "prefix")
-          ~extra_env:opam_cli_env ~and_return:(Ok "PREFIX");
-        expect_run
-          ~command:
-            Bos.Cmd.(
-              v "./configure" % "--enable-something" % "--prefix" % "PREFIX")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:Bos.Cmd.(v "make")
-          ~extra_env:None ~and_return:(Ok ());
-        expect_run
-          ~command:Bos.Cmd.(v "make" % "install")
-          ~extra_env:None ~and_return:(Ok ());
-      ]
+    test "reinstall: switch does not have sources"
+      ~expectations:
+        [
+          expect_run_out
+            ~command:
+              Bos.Cmd.(v "opam" % "config" % "expand" % "%{compiler-sources}%")
+            ~extra_env:opam_cli_env ~and_return:(Ok "");
+        ]
+      ~expected:
+        (Error
+           (`Msg
+             "Could not reinstall - switch is not linked to compiler sources"));
+    test "reinstall: switch does not have a configure command sources"
+      ~expectations:
+        [
+          expect_run_out
+            ~command:
+              Bos.Cmd.(v "opam" % "config" % "expand" % "%{compiler-sources}%")
+            ~extra_env:opam_cli_env ~and_return:(Ok "COMPILER-SOURCES");
+          expect_run_out
+            ~command:
+              Bos.Cmd.(
+                v "opam" % "config" % "expand"
+                % "%{compiler-configure-command}%")
+            ~extra_env:opam_cli_env ~and_return:(Ok "");
+          expect_run_out
+            ~command:Bos.Cmd.(v "opam" % "config" % "var" % "prefix")
+            ~extra_env:opam_cli_env ~and_return:(Ok "PREFIX");
+          expect_run
+            ~command:Bos.Cmd.(v "./configure" % "--prefix" % "PREFIX")
+            ~extra_env:None
+            ~chdir:(Some (Fpath.v "COMPILER-SOURCES"))
+            ~and_return:(Ok ());
+          expect_run
+            ~command:Bos.Cmd.(v "make")
+            ~extra_env:None
+            ~chdir:(Some (Fpath.v "COMPILER-SOURCES"))
+            ~and_return:(Ok ());
+          expect_run
+            ~command:Bos.Cmd.(v "make" % "install")
+            ~extra_env:None
+            ~chdir:(Some (Fpath.v "COMPILER-SOURCES"))
+            ~and_return:(Ok ());
+        ]
       ~expected:(Ok ());
   ]
 

@@ -13,6 +13,7 @@ let parse_tests =
         let got = Source.parse s in
         Alcotest.(check (result (module Source) error) __LOC__ expected got) )
   in
+  let fpath_exn s = Fpath.of_string s |> Rresult.R.failwith_error_msg in
   [
     test "full branch syntax" "user/repo:branch"
       (Ok (Github_branch { user = "user"; repo = "repo"; branch = "branch" }));
@@ -26,13 +27,16 @@ let parse_tests =
       (Ok (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
     test "defaults to main repo" "#1234"
       (Ok (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
-    test "something that does not parse" "a-random-string" (Error `Unknown);
+    test "something that does not parse" "" (Error `Unknown);
     test "users can have dashes" "user-with-dashes/repo#1234"
       (Ok
          (Github_PR { user = "user-with-dashes"; repo = "repo"; number = 1234 }));
     test "repos can have dashes" "user/repo-with-dashes#1234"
       (Ok
          (Github_PR { user = "user"; repo = "repo-with-dashes"; number = 1234 }));
+    test "relative directory" "." (Ok (Directory (fpath_exn ".")));
+    test "absolute directory" "/home/me/ocaml"
+      (Ok (Directory (fpath_exn "/home/me/ocaml")));
   ]
 
 let switch_target_tests =

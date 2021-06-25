@@ -19,6 +19,14 @@ Github PR numbers are also accepted:
   Run: OPAMCLI=2.0 opam pin add --switch ocaml-ocaml-1234 --yes ocaml-variants git+https://github.com/user-ocaml-ocaml-1234/repo-ocaml-ocaml-1234#branch-ocaml-ocaml-1234
   Run: OPAMCLI=2.0 opam switch set-base --switch ocaml-ocaml-1234 ocaml-variants
 
+Directories are supported.
+
+  $ opam-compiler create --dry-run /home/me/ocaml
+  Run: OPAMCLI=2.0 opam switch create home-me-ocaml --empty --description "[opam-compiler] /home/me/ocaml"
+  Run: OPAMCLI=2.0 opam pin add --switch home-me-ocaml --yes ocaml-variants file:///home/me/ocaml
+  Run: OPAMCLI=2.0 opam switch set-base --switch home-me-ocaml ocaml-variants
+  Run: OPAMCLI=2.0 opam config --switch home-me-ocaml set compiler-sources /home/me/ocaml
+
 An explicit configure step can be passed:
 
   $ opam-compiler create --dry-run USER/REPO:BRANCH --configure-command "./configure --enable-x"

@@ -64,22 +64,22 @@ let set_base runner name =
 let update runner name =
   run_opam runner [ A "update"; switch name; ocaml_variants ]
 
-let reinstall_configure runner ~configure_command =
+let reinstall_configure runner ~configure_command ~compiler_sources =
   let open Let_syntax.Result in
   let* prefix = run_out_opam runner [ A "config"; A "var"; A "prefix" ] in
   let base_command =
     Option.value configure_command ~default:Bos.Cmd.(v "./configure")
   in
   let command = Bos.Cmd.(base_command % "--prefix" % prefix) in
-  Runner.run runner command
+  Runner.run ~chdir:compiler_sources runner command
 
-let reinstall_compiler runner ~configure_command =
+let reinstall_compiler runner ~compiler_sources ~configure_command =
   let open Let_syntax.Result in
   let make = Bos.Cmd.(v "make") in
   let make_install = Bos.Cmd.(v "make" % "install") in
-  let* () = reinstall_configure runner ~configure_command in
-  let* () = Runner.run runner make in
-  Runner.run runner make_install
+  let* () = reinstall_configure runner ~compiler_sources ~configure_command in
+  let* () = Runner.run ~chdir:compiler_sources runner make in
+  Runner.run ~chdir:compiler_sources runner make_install
 
 let reinstall_packages runner =
   run_opam runner
@@ -88,3 +88,55 @@ let reinstall_packages runner =
 let remove_switch runner name =
   run_opam runner
     [ A "switch"; A "remove"; A "--yes"; A (Switch_name.to_string name) ]
+
+module Var = struct
+  type t = Compiler_sources | Configure_command
+
+  let prefix = "compiler-"
+
+  let suffix = function
+    | Compiler_sources -> "sources"
+    | Configure_command -> "configure-command"
+
+  let to_string var = prefix ^ suffix var
+
+  let get runner ~name var decode =
+    let open Let_syntax.Result in
+    let pattern = Format.sprintf "%%{%s}%%" (to_string var) in
+    let switch =
+      match name with Some name -> L [ switch name ] | None -> L []
+    in
+    let* output =
+      run_out_opam runner [ A "config"; switch; A "expand"; A pattern ]
+    in
+    if String.equal output "" then Ok None
+    else
+      match decode output with
+      | Ok x -> Ok (Some x)
+      | Error (`Msg _) -> Error `Unknown
+
+  let set runner ~name var encode = function
+    | None -> Ok ()
+    | Some value ->
+        run_opam runner
+          [
+            A "config";
+            switch name;
+            A "set";
+            A (to_string var);
+            A (encode value);
+          ]
+end
+
+let get_compiler_sources runner name =
+  Var.get runner ~name Compiler_sources Fpath.of_string
+
+let set_compiler_sources runner name value =
+  Var.set runner ~name Compiler_sources Fpath.to_string value
+
+let get_configure_command runner name =
+  Var.get runner ~name Configure_command Bos.Cmd.of_string
+
+let set_configure_command runner name value =
+  let cmd_to_string cmd = Format.asprintf "%a" pp_cmd cmd in
+  Var.set runner ~name Configure_command cmd_to_string value

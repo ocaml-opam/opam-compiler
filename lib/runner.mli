@@ -1,6 +1,7 @@
 type t = {
   run :
     ?extra_env:(string * string) list ->
+    ?chdir:Fpath.t ->
     Bos.Cmd.t ->
     (unit, [ `Command_failed of Bos.Cmd.t | `Unknown ]) result;
   run_out :
@@ -16,6 +17,7 @@ val dry_run : t
 val run :
   t ->
   ?extra_env:(string * string) list ->
+  ?chdir:Fpath.t ->
   Bos.Cmd.t ->
   (unit, [> `Command_failed of Bos.Cmd.t | `Unknown ]) result
 

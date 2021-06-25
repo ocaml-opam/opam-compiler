@@ -1,4 +1,7 @@
-type t = Github_branch of Branch.t | Github_PR of Pull_request.t
+type t =
+  | Github_branch of Branch.t
+  | Github_PR of Pull_request.t
+  | Directory of Fpath.t
 
 val switch_target : t -> Github_client.t -> (string, [> `Unknown ]) result
 
@@ -11,3 +14,5 @@ val pp : Format.formatter -> t -> unit
 val equal : t -> t -> bool
 
 val parse : string -> (t, [ `Unknown ]) result
+
+val compiler_sources : t -> Fpath.t option

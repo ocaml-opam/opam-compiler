@@ -17,3 +17,13 @@
  (alias runtest)
  (action
   (diff create.txt create.txt.gen)))
+
+(rule
+ (with-stdout-to
+  reinstall.txt.gen
+  (run opam-compiler reinstall --help=plain)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff reinstall.txt reinstall.txt.gen)))

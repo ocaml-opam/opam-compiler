@@ -1,12 +1,12 @@
 type ('a, 'b) expectation = 'a * 'b
 
+let expect expected ~and_return:return_value = (expected, return_value)
+
 type ('a, 'b) t = {
   testable : 'a Alcotest.testable;
   loc : string;
   mutable expectations : ('a, 'b) expectation list;
 }
-
-let expect expected ~and_return:return_value = (expected, return_value)
 
 let call t got =
   match t.expectations with
