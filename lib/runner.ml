@@ -33,7 +33,7 @@ module Real = struct
     let* env = explicit_env extra_env in
     Bos.OS.Cmd.run_out ?env cmd
     |> Bos.OS.Cmd.to_string
-    |> Rresult.R.reword_error (fun _ -> `Unknown)
+    |> Rresult.R.reword_error (fun _ -> `Command_failed cmd)
 end
 
 let real =
