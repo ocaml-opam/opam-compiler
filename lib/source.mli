@@ -1,4 +1,7 @@
-type t = Github_branch of Branch.t | Github_PR of Pull_request.t
+type t =
+  | Github_branch of Branch.t
+  | Github_PR of Pull_request.t
+  | Directory of Fpath.t
 
 val switch_target : t -> Github_client.t -> (string, [> `Unknown ]) result
 
