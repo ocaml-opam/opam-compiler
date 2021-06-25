@@ -20,3 +20,9 @@ val reinstall_compiler :
 val reinstall_packages : Runner.t -> (unit, error) result
 
 val remove_switch : Runner.t -> name:Switch_name.t -> (unit, error) result
+
+val get_compiler_sources :
+  Runner.t -> name:Switch_name.t -> (Fpath.t option, error) result
+
+val set_compiler_sources :
+  Runner.t -> name:Switch_name.t -> Fpath.t -> (unit, error) result
