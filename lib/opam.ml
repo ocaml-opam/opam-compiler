@@ -88,3 +88,27 @@ let reinstall_packages runner =
 let remove_switch runner ~name =
   run_opam runner
     [ A "switch"; A "remove"; A "--yes"; A (Switch_name.to_string name) ]
+
+let compiler_sources_var = "compiler-sources"
+
+let get_compiler_sources runner ~name =
+  let open Let_syntax.Result in
+  let pattern = Format.sprintf "%%{%s}%%" compiler_sources_var in
+  let* output =
+    run_out_opam runner [ A "config"; switch name; A "expand"; A pattern ]
+  in
+  if String.equal output "" then Ok None
+  else
+    match Fpath.of_string output with
+    | Ok x -> Ok (Some x)
+    | Error (`Msg _) -> Error `Unknown
+
+let set_compiler_sources runner ~name value =
+  run_opam runner
+    [
+      A "config";
+      switch name;
+      A "set";
+      A compiler_sources_var;
+      A (Fpath.to_string value);
+    ]
