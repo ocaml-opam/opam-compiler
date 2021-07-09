@@ -37,20 +37,32 @@ let create_tests =
       % "--description" % "[opam-compiler] USER/REPO:BRANCH")
   in
   let create_call = (create_cmd, opam_cli_env) in
+  let pin_add_cmd =
+    Bos.Cmd.(
+      v "opam" % "pin" % "add" % "--switch" % "USER-REPO-BRANCH" % "--yes"
+      % "ocaml-variants" % "git+https://github.com/USER/REPO#BRANCH")
+  in
+  let pin_add_call = (pin_add_cmd, opam_cli_env) in
   [
     test "create: create fails with unknown error"
       [ Mock.expect create_call ~and_return:(Error `Unknown) ]
       ~expected:(Error (`Msg "Cannot create switch"));
-    test "create: when opam command fails"
+    test "create: when pin command fails"
       [
-        Mock.expect create_call ~and_return:(Error (`Command_failed create_cmd));
+        Mock.expect create_call ~and_return:(Ok ());
+        Mock.expect pin_add_call
+          ~and_return:(Error (`Command_failed pin_add_cmd));
         Mock.expect
           ( Bos.Cmd.(
               v "opam" % "switch" % "remove" % "--yes" % "USER-REPO-BRANCH"),
             opam_cli_env )
           ~and_return:(Ok ());
       ]
-      ~expected:(Ok ());
+      ~expected:
+        (Rresult.R.error_msg
+           "Cannot create switch - command failed: opam pin add --switch \
+            USER-REPO-BRANCH --yes ocaml-variants \
+            git+https://github.com/USER/REPO#BRANCH");
   ]
 
 let reinstall_tests =
