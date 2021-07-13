@@ -17,14 +17,13 @@ let create runner github_client source switch_name ~configure_command =
   in
   let description = Source.switch_description source github_client in
   let open Let_syntax.Result in
-  (let* () = Opam.create runner ~name:switch_name ~description in
+  (let* () = Opam.create runner switch_name ~description in
    let* url = Source.switch_target source github_client in
    let* () =
-     try_ (Opam.pin_add runner ~name:switch_name url ~configure_command)
-       ~if_command_failed:(fun () ->
-         Opam.remove_switch runner ~name:switch_name)
+     try_ (Opam.pin_add runner switch_name url ~configure_command)
+       ~if_command_failed:(fun () -> Opam.remove_switch runner switch_name)
    in
-   Opam.set_base runner ~name:switch_name)
+   Opam.set_base runner switch_name)
   |> translate_error "Cannot create switch"
 
 type reinstall_mode = Quick | Full
