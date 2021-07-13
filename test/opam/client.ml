@@ -8,10 +8,10 @@ let () =
   | [| _ |] -> ()
   | [| _; "create"; name; description |] ->
       (let* name = Switch_name.parse name in
-       translate_error "create" (Opam.create runner ~name ~description))
+       translate_error "create" (Opam.create runner name ~description))
       |> Rresult.R.failwith_error_msg
   | [| _; "remove"; name |] ->
       (let* name = Switch_name.parse name in
-       translate_error "remove" (Opam.remove_switch runner ~name))
+       translate_error "remove" (Opam.remove_switch runner name))
       |> Rresult.R.failwith_error_msg
   | _ -> assert false
