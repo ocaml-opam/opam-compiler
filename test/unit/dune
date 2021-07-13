@@ -2,4 +2,4 @@
  (name test)
  (action
   (run %{test} --compact))
- (libraries alcotest opam_compiler))
+ (libraries alcotest either opam_compiler))

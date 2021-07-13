@@ -26,6 +26,7 @@
   bos
   cmdliner
   curly
+  (either :with-test)
   github
   ocaml-version
   re
