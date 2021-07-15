@@ -13,6 +13,6 @@ val pp : Format.formatter -> t -> unit
 
 val equal : t -> t -> bool
 
-val parse : string -> (t, [ `Unknown ]) result
+val parse : string -> (t, Rresult.R.msg) result
 
 val compiler_sources : t -> Fpath.t option

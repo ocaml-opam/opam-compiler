@@ -109,10 +109,10 @@ module Create = struct
   module Source_with_original = struct
     type t = { source : Source.t; original : string }
 
-    let of_string s =
-      match Source.parse s with
-      | Ok source -> Ok { source; original = s }
-      | Error `Unknown -> Rresult.R.error_msgf "Invalid source: %S" s
+    let of_string original =
+      let open Let_syntax.Result in
+      let+ source = Source.parse original in
+      { source; original }
 
     let pp ppf { original; _ } = Format.pp_print_string ppf original
 

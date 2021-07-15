@@ -31,14 +31,16 @@ let parse_as_branch s =
 let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
 
 let parse_as_directory s =
-  match Fpath.of_string s with Ok p -> Some (Directory p) | Error _ -> None
+  match Fpath.of_string s with
+  | Ok p when Fpath.is_abs p -> Ok (Directory p)
+  | Ok _ -> Rresult.R.error_msgf "Source should be an absolute directory"
+  | Error _ -> Rresult.R.error_msgf "Invalid path: %S" s
 
 let parse s =
-  let ( let/ ) f k = match f s with Some r -> Ok r | None -> k () in
-  let/ () = parse_as_branch in
-  let/ () = parse_as_pr in
-  let/ () = parse_as_directory in
-  Error `Unknown
+  let ( let/ ) x k = match x with Some r -> Ok r | None -> k () in
+  let/ () = parse_as_branch s in
+  let/ () = parse_as_pr s in
+  parse_as_directory s
 
 let pp ppf = function
   | Github_branch branch ->

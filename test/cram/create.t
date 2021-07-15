@@ -27,6 +27,14 @@ Directories are supported.
   Run: OPAMCLI=2.0 opam switch set-base --switch home-me-ocaml ocaml-variants
   Run: OPAMCLI=2.0 opam config --switch home-me-ocaml set compiler-sources /home/me/ocaml
 
+Directories need to be absolute paths.
+
+  $ opam-compiler create --dry-run somewhere
+  opam-compiler: SOURCE argument: Source should be an absolute directory
+  Usage: opam-compiler create [OPTION]... SOURCE
+  Try `opam-compiler create --help' or `opam-compiler --help' for more information.
+  [124]
+
 An explicit configure step can be passed:
 
   $ opam-compiler create --dry-run USER/REPO:BRANCH --configure-command "./configure --enable-x"

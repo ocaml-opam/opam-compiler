@@ -5,13 +5,15 @@ let error =
   let equal_error = ( = ) in
   Alcotest.testable pp_error equal_error
 
+let msg = Alcotest.testable Rresult.R.pp_msg ( = )
+
 let parse_tests =
   let test name s expected =
     ( name,
       `Quick,
       fun () ->
         let got = Source.parse s in
-        Alcotest.(check (result (module Source) error) __LOC__ expected got) )
+        Alcotest.(check (result (module Source) msg) __LOC__ expected got) )
   in
   let fpath_exn s = Fpath.of_string s |> Rresult.R.failwith_error_msg in
   [
@@ -27,16 +29,20 @@ let parse_tests =
       (Ok (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
     test "defaults to main repo" "#1234"
       (Ok (Github_PR { user = "ocaml"; repo = "ocaml"; number = 1234 }));
-    test "something that does not parse" "" (Error `Unknown);
+    test "something that does not parse" ""
+      (Rresult.R.error_msg "Invalid path: \"\"");
     test "users can have dashes" "user-with-dashes/repo#1234"
       (Ok
          (Github_PR { user = "user-with-dashes"; repo = "repo"; number = 1234 }));
     test "repos can have dashes" "user/repo-with-dashes#1234"
       (Ok
          (Github_PR { user = "user"; repo = "repo-with-dashes"; number = 1234 }));
-    test "relative directory" "." (Ok (Directory (fpath_exn ".")));
+    test "relative directory" "."
+      (Rresult.R.error_msg "Source should be an absolute directory");
     test "absolute directory" "/home/me/ocaml"
       (Ok (Directory (fpath_exn "/home/me/ocaml")));
+    test "invalid directory name" "/home\x00"
+      (Rresult.R.error_msg "Invalid path: \"/home\\000\"");
   ]
 
 let switch_target_tests =
