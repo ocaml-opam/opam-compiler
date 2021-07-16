@@ -90,53 +90,26 @@ let remove_switch runner name =
     [ A "switch"; A "remove"; A "--yes"; A (Switch_name.to_string name) ]
 
 module Var = struct
-  type t = Compiler_sources | Configure_command
-
   let prefix = "compiler-"
 
-  let suffix = function
-    | Compiler_sources -> "sources"
-    | Configure_command -> "configure-command"
+  let to_string var = prefix ^ var
 
-  let to_string var = prefix ^ suffix var
-
-  let get runner ~name var decode =
+  let get runner name ~variable =
     let open Let_syntax.Result in
-    let pattern = Format.sprintf "%%{%s}%%" (to_string var) in
+    let pattern = Format.sprintf "%%{%s}%%" (to_string variable) in
     let switch =
       match name with Some name -> L [ switch name ] | None -> L []
     in
-    let* output =
+    let+ output =
       run_out_opam runner [ A "config"; switch; A "expand"; A pattern ]
     in
-    if String.equal output "" then Ok None
-    else
-      match decode output with
-      | Ok x -> Ok (Some x)
-      | Error (`Msg _) -> Error `Unknown
+    if String.equal output "" then None else Some output
 
-  let set runner ~name var encode = function
-    | None -> Ok ()
-    | Some value ->
-        run_opam runner
-          [
-            A "config";
-            switch name;
-            A "set";
-            A (to_string var);
-            A (encode value);
-          ]
+  let set runner name ~variable ~value =
+    run_opam runner
+      [ A "config"; switch name; A "set"; A (to_string variable); A value ]
 end
 
-let get_compiler_sources runner name =
-  Var.get runner ~name Compiler_sources Fpath.of_string
+let get_variable = Var.get
 
-let set_compiler_sources runner name value =
-  Var.set runner ~name Compiler_sources Fpath.to_string value
-
-let get_configure_command runner name =
-  Var.get runner ~name Configure_command Bos.Cmd.of_string
-
-let set_configure_command runner name value =
-  let cmd_to_string cmd = Format.asprintf "%a" pp_cmd cmd in
-  Var.set runner ~name Configure_command cmd_to_string value
+let set_variable = Var.set

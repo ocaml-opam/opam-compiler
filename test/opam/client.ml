@@ -5,6 +5,8 @@ let pp_option pp ppf = function
   | None -> Format.fprintf ppf "None"
   | Some x -> Format.fprintf ppf "Some %a" pp x
 
+let pp_string ppf s = Format.fprintf ppf "%S" s
+
 let () =
   let open Let_syntax.Result in
   let runner = Runner.real in
@@ -18,19 +20,18 @@ let () =
       (let* name = Switch_name.parse name in
        translate_error "remove" (Opam.remove_switch runner name))
       |> Rresult.R.failwith_error_msg
-  | [| _; "compiler-sources"; name |] ->
+  | [| _; "get-var"; name; variable |] ->
       (let* name = Switch_name.parse name in
-       let+ path =
-         translate_error "compiler-sources"
-           (Opam.get_compiler_sources runner (Some name))
+       let+ r =
+         translate_error "get-var"
+           (Opam.get_variable runner (Some name) ~variable)
        in
-       Format.printf "compiler-sources: %a\n" (pp_option Fpath.pp) path)
+       Format.printf "get-var: %a\n" (pp_option pp_string) r)
       |> Rresult.R.failwith_error_msg
-  | [| _; "set-compiler-sources"; name; value_s |] ->
+  | [| _; "set-var"; name; variable; value |] ->
       (let* name = Switch_name.parse name in
-       let* value = Fpath.of_string value_s in
-       translate_error "set-compiler-sources"
-         (Opam.set_compiler_sources runner name (Some value)))
+       translate_error "set-var"
+         (Opam.set_variable runner name ~variable ~value))
       |> Rresult.R.failwith_error_msg
   | [| _; "reinstall-compiler"; compiler_sources_s |] ->
       (let* compiler_sources = Fpath.of_string compiler_sources_s in

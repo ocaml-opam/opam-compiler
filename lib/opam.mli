@@ -24,14 +24,15 @@ val reinstall_packages : Runner.t -> (unit, error) result
 
 val remove_switch : Runner.t -> Switch_name.t -> (unit, error) result
 
-val get_compiler_sources :
-  Runner.t -> Switch_name.t option -> (Fpath.t option, error) result
+val get_variable :
+  Runner.t ->
+  Switch_name.t option ->
+  variable:string ->
+  (string option, error) result
 
-val set_compiler_sources :
-  Runner.t -> Switch_name.t -> Fpath.t option -> (unit, error) result
-
-val get_configure_command :
-  Runner.t -> Switch_name.t option -> (Bos.Cmd.t option, error) result
-
-val set_configure_command :
-  Runner.t -> Switch_name.t -> Bos.Cmd.t option -> (unit, error) result
+val set_variable :
+  Runner.t ->
+  Switch_name.t ->
+  variable:string ->
+  value:string ->
+  (unit, error) result
