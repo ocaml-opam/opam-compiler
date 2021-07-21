@@ -15,7 +15,7 @@ depends: [
   "cmdliner"
   "curly"
   "either" {with-test}
-  "github"
+  "github-data"
   "ocaml-version"
   "re"
   "alcotest" {>= "1.2.0" & with-test}
