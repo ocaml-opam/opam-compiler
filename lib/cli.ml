@@ -196,14 +196,21 @@ let default =
   let open Cmdliner.Term in
   (ret (pure (`Help (`Auto, None))), info "opam-compiler")
 
+let map_result f = function
+  | `Ok x -> `Ok (f x)
+  | (`Version | `Help | `Error _) as r -> r
+
+let interpret_result =
+  map_result (fun op ->
+      match eval op with
+      | Ok () -> 0
+      | Error (`Msg msg) ->
+          print_endline msg;
+          2)
+
 let main () =
   let result =
     Cmdliner.Term.eval_choice default
       [ Create.command; Configure.command; Install.command ]
   in
-  (match result with
-  | `Ok op -> eval op |> Rresult.R.failwith_error_msg
-  | `Version -> ()
-  | `Help -> ()
-  | `Error _ -> ());
-  Cmdliner.Term.exit result
+  result |> interpret_result |> Cmdliner.Term.exit_status

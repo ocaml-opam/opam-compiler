@@ -13,7 +13,7 @@ If it does not exist, it prints an error:
 
   $ opam-compiler install
   grep: Makefile.config: No such file or directory
-  Fatal error: exception Failure("Could not install - configure step is required")
+  Could not install - configure step is required
   [2]
 
 If it exists, it is inspected. The prefix is expected to point at an opam
@@ -35,5 +35,5 @@ If prefix is something else, an error message is displayed:
 
   $ echo 'prefix=/usr/local/lib' > Makefile.config
   $ opam-compiler install
-  Fatal error: exception Failure("Could not install - configure step is required")
+  Could not install - configure step is required
   [2]
