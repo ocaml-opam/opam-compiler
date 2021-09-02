@@ -7,7 +7,7 @@ type t = { pr_info : Pull_request.t -> (pr_info, [ `Unknown ]) result }
 let pr_info t pr =
   (t.pr_info pr : (_, [ `Unknown ]) result :> (_, [> `Unknown ]) result)
 
-module Real = struct
+module Curly = struct
   let pull_source_user branch =
     match branch.Github_t.branch_user with
     | Some user -> Ok user.user_login
@@ -51,8 +51,8 @@ module Real = struct
     info_of_pull pull
 end
 
-let real =
-  let open Real in
+let curly =
+  let open Curly in
   { pr_info }
 
 module Dry_run = struct
@@ -72,3 +72,17 @@ end
 let dry_run =
   let open Dry_run in
   { pr_info }
+
+let cached c =
+  let table = Hashtbl.create 0 in
+  let pr_info pr =
+    match Hashtbl.find_opt table pr with
+    | Some hit -> Ok hit
+    | None ->
+        let result = c.pr_info pr in
+        Result.iter (fun info -> Hashtbl.add table pr info) result;
+        result
+  in
+  { pr_info }
+
+let real = cached curly

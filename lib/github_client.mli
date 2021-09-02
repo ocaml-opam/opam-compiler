@@ -7,3 +7,5 @@ val pr_info : t -> Pull_request.t -> (pr_info, [> `Unknown ]) result
 val real : t
 
 val dry_run : t
+
+val cached : t -> t
