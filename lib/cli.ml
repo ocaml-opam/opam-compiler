@@ -9,11 +9,13 @@ type t =
       github_client : Github_client.t;
     }
   | Configure of { runner : Runner.t; args : string list }
+  | Install of { runner : Runner.t }
 
 let eval = function
   | Create { source; switch_name; configure_command; runner; github_client } ->
       Op.create runner github_client source switch_name ~configure_command
   | Configure { runner; args } -> Op.configure runner args
+  | Install { runner } -> Op.install runner
 
 let configure_command_explicit =
   let open Cmdliner.Arg in
@@ -179,13 +181,25 @@ module Configure = struct
   let command = (term, info)
 end
 
+module Install = struct
+  let term =
+    let open Let_syntax.Cmdliner in
+    let+ runner = runner in
+    Install { runner }
+
+  let info = Cmdliner.Term.info ~doc:"Run make install" "install"
+
+  let command = (term, info)
+end
+
 let default =
   let open Cmdliner.Term in
   (ret (pure (`Help (`Auto, None))), info "opam-compiler")
 
 let main () =
   let result =
-    Cmdliner.Term.eval_choice default [ Create.command; Configure.command ]
+    Cmdliner.Term.eval_choice default
+      [ Create.command; Configure.command; Install.command ]
   in
   (match result with
   | `Ok op -> eval op |> Rresult.R.failwith_error_msg

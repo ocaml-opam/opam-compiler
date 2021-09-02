@@ -15,3 +15,5 @@ val reinstall :
   (unit, [> Rresult.R.msg ]) result
 
 val configure : Runner.t -> string list -> (unit, [> Rresult.R.msg ]) result
+
+val install : Runner.t -> (unit, [> Rresult.R.msg ]) result

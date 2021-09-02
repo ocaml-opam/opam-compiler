@@ -44,3 +44,23 @@ let configure runner args =
    let cmd = Bos.Cmd.(v "./configure" % "--prefix" % prefix %% of_list args) in
    Runner.run runner cmd)
   |> translate_error "Could not configure"
+
+let file_exists runner path =
+  let cmd =
+    Bos.Cmd.(
+      v "grep" % "-q" % "-e" % "prefix=.*_opam" % "-e" % "prefix=.*\\.opam"
+      % path)
+  in
+  match Runner.run runner cmd with
+  | Ok () -> Ok true
+  | Error (`Command_failed _) -> Ok false
+  | Error _ as e -> e
+
+let install runner =
+  let open Let_syntax.Result in
+  (let* exists = file_exists runner "Makefile.config" in
+   if not exists then Error `Configure_needed
+   else
+     let cmd = Bos.Cmd.(v "make" % "install") in
+     Runner.run runner cmd)
+  |> translate_error "Could not install"

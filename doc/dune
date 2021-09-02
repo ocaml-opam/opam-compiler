@@ -27,3 +27,13 @@
  (alias runtest)
  (action
   (diff configure.txt configure.txt.gen)))
+
+(rule
+ (with-stdout-to
+  install.txt.gen
+  (run opam-compiler install --help=plain)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff install.txt install.txt.gen)))
