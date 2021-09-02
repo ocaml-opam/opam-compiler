@@ -5,6 +5,9 @@ SYNOPSIS
        opam-compiler COMMAND ...
 
 COMMANDS
+       configure
+           Run ./configure command
+
        create
            Create a switch from a compiler source
 

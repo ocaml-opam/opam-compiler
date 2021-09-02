@@ -17,3 +17,13 @@
  (alias runtest)
  (action
   (diff create.txt create.txt.gen)))
+
+(rule
+ (with-stdout-to
+  configure.txt.gen
+  (run opam-compiler configure --help=plain)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff configure.txt configure.txt.gen)))

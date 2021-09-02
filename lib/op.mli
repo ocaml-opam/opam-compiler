@@ -13,3 +13,5 @@ val reinstall :
   reinstall_mode ->
   configure_command:Bos.Cmd.t option ->
   (unit, [> Rresult.R.msg ]) result
+
+val configure : Runner.t -> string list -> (unit, [> Rresult.R.msg ]) result

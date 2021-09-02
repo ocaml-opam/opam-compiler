@@ -20,3 +20,5 @@ val reinstall_compiler :
 val reinstall_packages : Runner.t -> (unit, error) result
 
 val remove_switch : Runner.t -> Switch_name.t -> (unit, error) result
+
+val get_prefix : Runner.t -> (string, error) result

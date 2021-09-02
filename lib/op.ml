@@ -37,3 +37,10 @@ let reinstall runner mode ~configure_command =
   (let* () = Opam.reinstall_compiler runner ~configure_command in
    reinstall_packages_if_needed runner mode)
   |> translate_error "Could not reinstall"
+
+let configure runner args =
+  let open Let_syntax.Result in
+  (let* prefix = Opam.get_prefix runner in
+   let cmd = Bos.Cmd.(v "./configure" % "--prefix" % prefix %% of_list args) in
+   Runner.run runner cmd)
+  |> translate_error "Could not configure"

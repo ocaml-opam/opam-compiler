@@ -64,9 +64,11 @@ let set_base runner name =
 let update runner name =
   run_opam runner [ A "update"; switch name; ocaml_variants ]
 
+let get_prefix runner = run_out_opam runner [ A "config"; A "var"; A "prefix" ]
+
 let reinstall_configure runner ~configure_command =
   let open Let_syntax.Result in
-  let* prefix = run_out_opam runner [ A "config"; A "var"; A "prefix" ] in
+  let* prefix = get_prefix runner in
   let base_command =
     Option.value configure_command ~default:Bos.Cmd.(v "./configure")
   in
