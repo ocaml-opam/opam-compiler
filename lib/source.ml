@@ -72,18 +72,14 @@ let parse_as_branch s =
 
 let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
 
+let ( let/ ) x f = match x with Some r -> Ok r | None -> f ()
+
 let parse s =
-  match parse_as_branch_url s with
-  | Some r -> Ok r
-  | None -> (
-      match parse_as_pr_url s with
-      | Some r -> Ok r
-      | None -> (
-          match parse_as_branch s with
-          | Some r -> Ok r
-          | None -> (
-              match parse_as_pr s with Some r -> Ok r | None -> Error `Unknown))
-      )
+  let/ () = parse_as_branch_url s in
+  let/ () = parse_as_pr_url s in
+  let/ () = parse_as_branch s in
+  let/ () = parse_as_pr s in
+  Error `Unknown
 
 let pp ppf = function
   | Github_branch branch ->
