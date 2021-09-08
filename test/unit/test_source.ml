@@ -35,6 +35,10 @@ let parse_tests =
          (Github_PR { user = "user"; repo = "repo-with-dashes"; number = 1234 }));
     test "url syntax for issues" "https://github.com/user/repo/pull/1234"
       (Ok (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
+    test "url syntax for branches"
+      "https://github.com/user/repo/tree/branch_name"
+      (Ok
+         (Github_branch { user = "user"; repo = "repo"; branch = "branch_name" }));
   ]
 
 let switch_target_tests =
