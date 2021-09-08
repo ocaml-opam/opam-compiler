@@ -21,6 +21,7 @@ depends: [
   "re"
   "rresult" {>= "0.6.0"}
   "alcotest" {>= "1.2.0" & with-test}
+  "uri"
   "odoc" {with-doc}
 ]
 conflicts: [

@@ -39,6 +39,15 @@ let parse_tests =
       "https://github.com/user/repo/tree/branch_name"
       (Ok
          (Github_branch { user = "user"; repo = "repo"; branch = "branch_name" }));
+    test "urls need to be decoded"
+      "https://github.com/user/repo/tree/4.12.0+domains%2Bsafepoint%2Bchannel_hooks"
+      (Ok
+         (Github_branch
+            {
+              user = "user";
+              repo = "repo";
+              branch = "4.12.0+domains+safepoint+channel_hooks";
+            }));
   ]
 
 let switch_target_tests =

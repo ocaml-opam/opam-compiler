@@ -42,6 +42,7 @@
   (alcotest
    (and
     (>= 1.2.0)
+   uri
     :with-test)))
  (conflicts
   (result (< 1.5))))
