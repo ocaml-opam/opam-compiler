@@ -33,6 +33,8 @@ let parse_tests =
     test "repos can have dashes" "user/repo-with-dashes#1234"
       (Ok
          (Github_PR { user = "user"; repo = "repo-with-dashes"; number = 1234 }));
+    test "url syntax for issues" "https://github.com/user/repo/pull/1234"
+      (Ok (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
   ]
 
 let switch_target_tests =
