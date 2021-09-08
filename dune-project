@@ -33,4 +33,5 @@
   (alcotest
    (and
     (>= 1.2.0)
-    :with-test))))
+    :with-test))
+  uri))

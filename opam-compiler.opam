@@ -19,6 +19,7 @@ depends: [
   "ocaml-version"
   "re"
   "alcotest" {>= "1.2.0" & with-test}
+  "uri"
   "odoc" {with-doc}
 ]
 build: [

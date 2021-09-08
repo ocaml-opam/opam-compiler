@@ -44,7 +44,7 @@ let parse_as_branch_url s =
          ])
   in
   let open Let_syntax.Option in
-  let+ g = Re.exec_opt re s in
+  let+ g = Re.exec_opt re (Uri.pct_decode s) in
   let user = Re.Group.get g 1 in
   let repo = Re.Group.get g 2 in
   let branch = Re.Group.get g 3 in
