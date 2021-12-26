@@ -27,7 +27,7 @@ val pp_env : Format.formatter -> (string * string) list option -> unit
 
 val pp_cmd : Format.formatter -> Bos.Cmd.t -> unit
 
-type error = [ `Command_failed of Bos.Cmd.t | `Unknown ]
+type error = [ `Command_failed of Bos.Cmd.t | `Configure_needed | `Unknown ]
 
 val translate_error :
   string -> ('a, [< error ]) result -> ('a, [> Rresult.R.msg ]) result

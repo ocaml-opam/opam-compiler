@@ -1,0 +1,25 @@
+NAME
+       opam-compiler-configure - Run ./configure command
+
+SYNOPSIS
+       opam-compiler configure [OPTION]... [CONFIGURE_ARGUMENT]...
+
+ARGUMENTS
+       CONFIGURE_ARGUMENT
+           Positional arguments are passed verbatim to ./configure.
+
+OPTIONS
+       --dry-run
+           Do not perform external commands. Print them and continue as if
+           they worked.
+
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of `auto',
+           `pager', `groff' or `plain'. With `auto', the format is `pager` or
+           `plain' whenever the TERM env var is `dumb' or undefined.
+
+       --with=FEATURES
+           Create a switch with this set of features. For example --with
+           flambda,nnp will create a switch with the flambda and
+           no-naked-pointers features enabled.
+

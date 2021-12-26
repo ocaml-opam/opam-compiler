@@ -1,20 +1,14 @@
 NAME
-       opam-compiler
+       opam-compiler-install - Run make install
 
 SYNOPSIS
-       opam-compiler COMMAND ...
-
-COMMANDS
-       configure
-           Run ./configure command
-
-       create
-           Create a switch from a compiler source
-
-       install
-           Run make install
+       opam-compiler install [OPTION]... 
 
 OPTIONS
+       --dry-run
+           Do not perform external commands. Print them and continue as if
+           they worked.
+
        --help[=FMT] (default=auto)
            Show this help in format FMT. The value FMT must be one of `auto',
            `pager', `groff' or `plain'. With `auto', the format is `pager` or

@@ -37,3 +37,30 @@ let reinstall runner mode ~configure_command =
   (let* () = Opam.reinstall_compiler runner ~configure_command in
    reinstall_packages_if_needed runner mode)
   |> translate_error "Could not reinstall"
+
+let configure runner args =
+  let open Let_syntax.Result in
+  (let* prefix = Opam.get_prefix runner in
+   let cmd = Bos.Cmd.(v "./configure" % "--prefix" % prefix %% of_list args) in
+   Runner.run runner cmd)
+  |> translate_error "Could not configure"
+
+let file_exists runner path =
+  let cmd =
+    Bos.Cmd.(
+      v "grep" % "-q" % "-e" % "prefix=.*_opam" % "-e" % "prefix=.*\\.opam"
+      % path)
+  in
+  match Runner.run runner cmd with
+  | Ok () -> Ok true
+  | Error (`Command_failed _) -> Ok false
+  | Error _ as e -> e
+
+let install runner =
+  let open Let_syntax.Result in
+  (let* exists = file_exists runner "Makefile.config" in
+   if not exists then Error `Configure_needed
+   else
+     let cmd = Bos.Cmd.(v "make" % "install") in
+     Runner.run runner cmd)
+  |> translate_error "Could not install"
