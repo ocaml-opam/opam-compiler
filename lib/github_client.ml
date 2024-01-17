@@ -1,7 +1,6 @@
 open! Import
 
 type pr_info = { source_branch : Branch.t; title : string }
-
 type t = { pr_info : Pull_request.t -> (pr_info, [ `Unknown ]) result }
 
 let pr_info t pr =

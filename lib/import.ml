@@ -6,13 +6,11 @@ module Let_syntax = struct
     open Cmdliner.Term
 
     let ( let+ ) t f = const f $ t
-
     let ( and+ ) a b = const (fun x y -> (x, y)) $ a $ b
   end
 
   module Option = struct
     let ( let+ ) x f = Option.map f x
-
     let ( let* ) = Option.bind
 
     let ( and+ ) xo yo =
@@ -23,7 +21,6 @@ module Let_syntax = struct
 
   module Result = struct
     let ( let+ ) x f = Result.map f x
-
     let ( let* ) = Result.bind
   end
 end
@@ -33,9 +30,7 @@ let pp_env ppf = function
   | Some kvs -> List.iter (fun (k, v) -> Format.fprintf ppf "%s=%s " k v) kvs
 
 let needs_quoting s = Astring.String.exists Astring.Char.Ascii.is_white s
-
 let quote s = Printf.sprintf {|"%s"|} s
-
 let quote_if_needed s = if needs_quoting s then quote s else s
 
 let pp_cmd ppf cmd =

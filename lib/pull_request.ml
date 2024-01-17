@@ -6,11 +6,8 @@ let pp ppf { user; repo; number } =
   Format.fprintf ppf "{ user = %S; repo = %S; number = %d }" user repo number
 
 let equal (x : t) y = x = y
-
 let word = Re.rep1 (Re.alt [ Re.wordc; Re.char '-' ])
-
 let user_re = word
-
 let repo_re = word
 
 let parse s =
