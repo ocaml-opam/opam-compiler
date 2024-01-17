@@ -2,15 +2,26 @@ NAME
        opam-compiler
 
 SYNOPSIS
-       opam-compiler COMMAND ...
+       opam-compiler COMMAND …
 
 COMMANDS
-       create
+       create [OPTION]… SOURCE
            Create a switch from a compiler source
 
-OPTIONS
+COMMON OPTIONS
        --help[=FMT] (default=auto)
-           Show this help in format FMT. The value FMT must be one of `auto',
-           `pager', `groff' or `plain'. With `auto', the format is `pager` or
-           `plain' whenever the TERM env var is `dumb' or undefined.
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
+
+EXIT STATUS
+       opam-compiler exits with:
+
+       0   on success.
+
+       123 on indiscriminate errors reported on standard error.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
 
