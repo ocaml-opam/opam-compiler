@@ -140,24 +140,20 @@ module Create = struct
     and+ switch_name = switch_name
     and+ configure_command = configure_command
     and+ runner, github_client = clients in
-    Create { source; switch_name; configure_command; runner; github_client }
+    let op =
+      Create { source; switch_name; configure_command; runner; github_client }
+    in
+    eval op |> Rresult.R.failwith_error_msg
 
   let info =
-    Cmdliner.Term.info ~man ~doc:"Create a switch from a compiler source"
+    Cmdliner.Cmd.info ~man ~doc:"Create a switch from a compiler source"
       "create"
 
-  let command = (term, info)
+  let command = Cmdliner.Cmd.v info term
 end
 
-let default =
-  let open Cmdliner.Term in
-  (ret (pure (`Help (`Auto, None))), info "opam-compiler")
+let info = Cmdliner.Cmd.info "opam-compiler"
 
-let main () =
-  let result = Cmdliner.Term.eval_choice default [ Create.command ] in
-  (match result with
-  | `Ok op -> eval op |> Rresult.R.failwith_error_msg
-  | `Version -> ()
-  | `Help -> ()
-  | `Error _ -> ());
-  Cmdliner.Term.exit result
+let group = Cmdliner.Cmd.group info [ Create.command ]
+
+let main () = Cmdliner.Cmd.eval group |> Stdlib.exit

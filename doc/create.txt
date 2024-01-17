@@ -2,7 +2,7 @@ NAME
        opam-compiler-create - Create a switch from a compiler source
 
 SYNOPSIS
-       opam-compiler create [OPTION]... SOURCE
+       opam-compiler create [OPTION]… SOURCE
 
 DESCRIPTION
        There are several ways to specify where to find a compiler:
@@ -18,6 +18,7 @@ DESCRIPTION
 
        Github pull request (short form)
            #number (repo defaults to "ocaml/ocaml")
+
 ARGUMENTS
        SOURCE (required)
            Where to fetch the compiler.
@@ -30,11 +31,6 @@ OPTIONS
            Do not perform external commands. Print them and continue as if
            they worked.
 
-       --help[=FMT] (default=auto)
-           Show this help in format FMT. The value FMT must be one of `auto',
-           `pager', `groff' or `plain'. With `auto', the format is `pager` or
-           `plain' whenever the TERM env var is `dumb' or undefined.
-
        --switch=SWITCH_NAME
            Use this name for the switch. If omitted, a name is inferred from
            the source. This name is used as is by opam, so passing "." will
@@ -44,4 +40,24 @@ OPTIONS
            Create a switch with this set of features. For example --with
            flambda,nnp will create a switch with the flambda and
            no-naked-pointers features enabled.
+
+COMMON OPTIONS
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of auto,
+           pager, groff or plain. With auto, the format is pager or plain
+           whenever the TERM env var is dumb or undefined.
+
+EXIT STATUS
+       opam-compiler create exits with:
+
+       0   on success.
+
+       123 on indiscriminate errors reported on standard error.
+
+       124 on command line parsing errors.
+
+       125 on unexpected internal errors (bugs).
+
+SEE ALSO
+       opam-compiler(1)
 

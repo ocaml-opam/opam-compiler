@@ -43,14 +43,14 @@ Several of them can be specified:
 A proper error message is displayed if a variant is not recognized:
 
   $ opam-compiler create --dry-run USER/REPO:BRANCH --with something
-  opam-compiler: option `--with': invalid element in list (`something'):
+  opam-compiler: option '--with': invalid element in list ('something'):
                  Unknown variant.
-  Usage: opam-compiler create [OPTION]... SOURCE
-  Try `opam-compiler create --help' or `opam-compiler --help' for more information.
+  Usage: opam-compiler create [OPTION]… SOURCE
+  Try 'opam-compiler create --help' or 'opam-compiler --help' for more information.
   [124]
 
 It is not possible to mix --configure-command and --with:
 
   $ opam-compiler create --dry-run USER/REPO:BRANCH --configure-command "./configure --enable-x" --with afl
   opam-compiler: --configure-command and --with cannot be passed together.
-  [1]
+  [124]

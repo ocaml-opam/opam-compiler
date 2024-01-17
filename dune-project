@@ -24,7 +24,8 @@
   (ocaml
    (>= 4.08.0))
   bos
-  cmdliner
+  (cmdliner
+   (>= 1.1.0))
   curly
   (either :with-test)
   github-data
