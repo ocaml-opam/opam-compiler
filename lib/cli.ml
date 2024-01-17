@@ -76,7 +76,6 @@ module Create = struct
       | Error `Unknown -> Rresult.R.error_msgf "Invalid source: %S" s
 
     let pp ppf { original; _ } = Format.pp_print_string ppf original
-
     let conv = Cmdliner.Arg.conv (of_string, pp)
   end
 
@@ -153,7 +152,5 @@ module Create = struct
 end
 
 let info = Cmdliner.Cmd.info "opam-compiler"
-
 let group = Cmdliner.Cmd.group info [ Create.command ]
-
 let main () = Cmdliner.Cmd.eval group |> Stdlib.exit

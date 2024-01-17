@@ -2,7 +2,6 @@ open Opam_compiler
 open Import
 
 let msg = Alcotest.testable Rresult.R.pp_msg ( = )
-
 let cmd = Alcotest.testable pp_cmd Bos.Cmd.equal
 
 type call_run = {
