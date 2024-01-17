@@ -33,6 +33,21 @@ let parse_tests =
     test "repos can have dashes" "user/repo-with-dashes#1234"
       (Ok
          (Github_PR { user = "user"; repo = "repo-with-dashes"; number = 1234 }));
+    test "url syntax for issues" "https://github.com/user/repo/pull/1234"
+      (Ok (Github_PR { user = "user"; repo = "repo"; number = 1234 }));
+    test "url syntax for branches"
+      "https://github.com/user/repo/tree/branch_name"
+      (Ok
+         (Github_branch { user = "user"; repo = "repo"; branch = "branch_name" }));
+    test "urls need to be decoded"
+      "https://github.com/user/repo/tree/4.12.0+domains%2Bsafepoint%2Bchannel_hooks"
+      (Ok
+         (Github_branch
+            {
+              user = "user";
+              repo = "repo";
+              branch = "4.12.0+domains+safepoint+channel_hooks";
+            }));
   ]
 
 let switch_target_tests =

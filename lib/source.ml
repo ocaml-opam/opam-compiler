@@ -4,8 +4,53 @@ type t = Github_branch of Branch.t | Github_PR of Pull_request.t
 
 let github_pr pr = Github_PR pr
 
+let parse_as_pr_url s =
+  let re =
+    Re.compile
+      (Re.seq
+         [
+           Re.bos;
+           Re.str "https://github.com/";
+           Re.group Pull_request.user_re;
+           Re.str "/";
+           Re.group Pull_request.repo_re;
+           Re.str "/pull/";
+           Re.group (Re.rep1 Re.digit);
+           Re.eos;
+         ])
+  in
+  let open Let_syntax.Option in
+  let+ g = Re.exec_opt re s in
+  let user = Re.Group.get g 1 in
+  let repo = Re.Group.get g 2 in
+  let number = Re.Group.get g 3 |> int_of_string in
+  Github_PR { user; repo; number }
+
+let branch_name = Re.rep1 Re.any
+
+let parse_as_branch_url s =
+  let re =
+    Re.compile
+      (Re.seq
+         [
+           Re.bos;
+           Re.str "https://github.com/";
+           Re.group Pull_request.user_re;
+           Re.str "/";
+           Re.group Pull_request.repo_re;
+           Re.str "/tree/";
+           Re.group branch_name;
+           Re.eos;
+         ])
+  in
+  let open Let_syntax.Option in
+  let+ g = Re.exec_opt re (Uri.pct_decode s) in
+  let user = Re.Group.get g 1 in
+  let repo = Re.Group.get g 2 in
+  let branch = Re.Group.get g 3 in
+  Github_branch { user; repo; branch }
+
 let parse_as_branch s =
-  let branch_name = Re.rep1 Re.any in
   let re_branch =
     Re.compile
       (Re.seq
@@ -27,11 +72,14 @@ let parse_as_branch s =
 
 let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
 
+let ( let/ ) x f = match x with Some r -> Ok r | None -> f ()
+
 let parse s =
-  match parse_as_branch s with
-  | Some r -> Ok r
-  | None -> (
-      match parse_as_pr s with Some r -> Ok r | None -> Error `Unknown)
+  let/ () = parse_as_branch_url s in
+  let/ () = parse_as_pr_url s in
+  let/ () = parse_as_branch s in
+  let/ () = parse_as_pr s in
+  Error `Unknown
 
 let pp ppf = function
   | Github_branch branch ->
