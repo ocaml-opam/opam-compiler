@@ -1,4 +1,4 @@
-## unreleased
+## 0.2.0 (2024-01-19)
 
 - Use curl to download (#10, @emillon)
 - Set switch base to prevent compiler downgrades (#12, fixes #7, @emillon)
