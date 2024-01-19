@@ -26,12 +26,22 @@
   bos
   (cmdliner
    (>= 1.1.0))
-  curly
+  (cmdliner
+   (and
+   (>= 1.2.0)
+   :with-test))
+  (curly
+   (>= 0.2.0))
   (either :with-test)
   github-data
-  ocaml-version
+  (ocaml-version
+   (>= 3.0.0))
   re
+  (rresult
+   (>= 0.6.0))
   (alcotest
    (and
     (>= 1.2.0)
-    :with-test))))
+    :with-test)))
+ (conflicts
+  (result (< 1.5))))
