@@ -39,10 +39,10 @@
   re
   (rresult
    (>= 0.6.0))
+  uri
   (alcotest
    (and
     (>= 1.2.0)
-   uri
     :with-test)))
  (conflicts
   (result (< 1.5))))
