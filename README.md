@@ -34,6 +34,9 @@ example, the following is recognized:
     # Use this branch
     opam compiler create 'myself/ocaml:mybranch'
 
+    # Use this pull request
+    opam compiler create https://github.com/ocaml/ocaml/pull/10831
+
 It will try determine a switch name and description from the source name, but it
 is also possible to pass an explicit switch name:
 
