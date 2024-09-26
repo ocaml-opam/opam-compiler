@@ -1,3 +1,6 @@
+## Unreleased
+- Support Github URLs as sources (#32, @emillon)
+
 ## 0.2.0 (2024-01-19)
 
 - Use curl to download (#10, @emillon)
