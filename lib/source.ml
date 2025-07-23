@@ -71,7 +71,6 @@ let parse_as_branch s =
   Github_branch { user; repo; branch }
 
 let parse_as_pr s = Option.map github_pr (Pull_request.parse s)
-
 let ( let/ ) x f = match x with Some r -> Ok r | None -> f ()
 
 let parse s =
