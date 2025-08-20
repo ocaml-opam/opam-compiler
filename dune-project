@@ -43,6 +43,8 @@
   (alcotest
    (and
     (>= 1.2.0)
-    :with-test)))
+    :with-test))
+
+ (ocamlformat (and :with-dev-setup (= 0.27.0))))
  (conflicts
   (result (< 1.5))))

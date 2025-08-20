@@ -22,6 +22,7 @@ depends: [
   "rresult" {>= "0.6.0"}
   "uri"
   "alcotest" {>= "1.2.0" & with-test}
+  "ocamlformat" {with-dev-setup & = "0.27.0"}
   "odoc" {with-doc}
 ]
 conflicts: [
