@@ -19,6 +19,9 @@ DESCRIPTION
        Github pull request (short form)
            #number (repo defaults to "ocaml/ocaml")
 
+       Github url
+           https://github.com/user/repo/pull/1
+
 ARGUMENTS
        SOURCE (required)
            Where to fetch the compiler.

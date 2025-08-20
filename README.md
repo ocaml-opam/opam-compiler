@@ -19,7 +19,7 @@ Installing
 This is an opam plugin. Once installed, it will be available globally using
 `opam compiler ARGS`. To install it, pin it to get a development version:
 
-    opam pin add opam-compiler 'git+https://github.com/emillon/opam-compiler.git'
+    opam pin add opam-compiler 'git+https://github.com/ocaml-opam/opam-compiler.git'
 
 Creating a switch
 -----------------
