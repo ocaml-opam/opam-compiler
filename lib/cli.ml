@@ -131,6 +131,7 @@ module Create = struct
       `I
         ( "Github pull request (short form)",
           "#number (repo defaults to \"ocaml/ocaml\")" );
+      `I ("Github url", "https://github.com/user/repo/pull/1");
     ]
 
   let term =
