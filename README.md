@@ -1,7 +1,7 @@
 opam-compiler
 =============
 
-A WIP opam plugin to manage compiler installations.
+An opam plugin to manage compiler installations.
 
 It can be used to create switches from various sources such as the main
 repository, ocaml-multicore, or a local directories. It can use tag names,
@@ -16,8 +16,11 @@ compiler in place.
 Installing
 ----------
 
-This is an opam plugin. Once installed, it will be available globally using
-`opam compiler ARGS`. To install it, pin it to get a development version:
+This is an [opam plugin](https://opam.ocaml.org/doc/Manual.html#Plugins).
+
+Once installed, it will be available globally using `opam compiler ARGS`.
+To install it, either run `opam install opam-compiler` to use the opam-repository
+version or pin it to get a development version:
 
     opam pin add opam-compiler 'git+https://github.com/ocaml-opam/opam-compiler.git'
 
@@ -25,8 +28,8 @@ Creating a switch
 -----------------
 
 `opam compiler create` is a wrapper around `opam switch create` that will use a
-custom. The documentation can be found [here](doc/create.txt), but as an
-example, the following is recognized:
+custom OCaml compiler. The documentation can be found [here](doc/create.txt), but as an
+example, the following is recognised:
 
     # Use this pull request number
     opam compiler create '#1234'
@@ -51,3 +54,6 @@ which will create a vanilla compiler. It is possible to override this:
 
     # Just build the bytecode compiler from a pull request
     opam compiler create '#1234' --configure-command "./configure --disable-native-compiler"
+
+    # Build the native compiler with flambda and frame pointers
+    opam compiler create '#1234' --configure-command "./configure --enable-flambda --enable-frame-pointers"

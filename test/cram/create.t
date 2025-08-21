@@ -19,6 +19,13 @@ Github PR numbers are also accepted:
   Run: OPAMCLI=2.0 opam pin add --switch ocaml-ocaml-1234 --yes ocaml-variants git+https://github.com/user-ocaml-ocaml-1234/repo-ocaml-ocaml-1234#branch-ocaml-ocaml-1234
   Run: OPAMCLI=2.0 opam switch set-base --switch ocaml-ocaml-1234 ocaml-variants
 
+Github source urls are also accepted:
+
+  $ opam-compiler create --dry-run 'https://github.com/ocaml/ocaml/pull/10831'
+  Run: OPAMCLI=2.0 opam switch create ocaml-ocaml-10831 --empty --description "[opam-compiler] ocaml/ocaml#10831 - Title of ocaml-ocaml-10831"
+  Run: OPAMCLI=2.0 opam pin add --switch ocaml-ocaml-10831 --yes ocaml-variants git+https://github.com/user-ocaml-ocaml-10831/repo-ocaml-ocaml-10831#branch-ocaml-ocaml-10831
+  Run: OPAMCLI=2.0 opam switch set-base --switch ocaml-ocaml-10831 ocaml-variants
+
 An explicit configure step can be passed:
 
   $ opam-compiler create --dry-run USER/REPO:BRANCH --configure-command "./configure --enable-x"
