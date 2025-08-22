@@ -36,7 +36,7 @@
   github-data
   (ocaml-version
    (>= 3.0.0))
-  re
+  (re (>= 1.5.0))
   (rresult
    (>= 0.6.0))
   uri
